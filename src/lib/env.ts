@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { z } from 'zod';
 
 const logLevels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
@@ -20,9 +21,24 @@ const serverEnvSchema = z.object({
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 let cachedEnv: ServerEnv | undefined;
+let envFileLoaded = false;
+
+/**
+ * Carga `.env.local` una sola vez. Next.js ya lo hace en su propio runtime, así que
+ * esto solo afecta a scripts y pruebas.
+ */
+export function loadEnvFileForScripts(): void {
+  if (envFileLoaded) return;
+  envFileLoaded = true;
+  if (process.env.NEXT_RUNTIME) return;
+  if (existsSync('.env.local')) {
+    process.loadEnvFile('.env.local');
+  }
+}
 
 export function serverEnv(): ServerEnv {
   if (!cachedEnv) {
+    loadEnvFileForScripts();
     const result = serverEnvSchema.safeParse(process.env);
     if (!result.success) {
       throw new Error(`Configuración de entorno inválida:\n${z.prettifyError(result.error)}`);

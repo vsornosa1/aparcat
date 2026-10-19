@@ -1,3 +1,3 @@
-import { loadLocalEnvFile } from '@/lib/load-env-file';
+import { loadEnvFileForScripts } from '@/lib/env';
 
-loadLocalEnvFile();
+loadEnvFileForScripts();

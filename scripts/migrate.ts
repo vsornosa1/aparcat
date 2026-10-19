@@ -1,9 +1,6 @@
 import { closeDb } from '@/db/client';
 import { runMigrations } from '@/db/migrate';
-import { loadLocalEnvFile } from '@/lib/load-env-file';
 import { logger } from '@/lib/logger';
-
-loadLocalEnvFile();
 
 async function main(): Promise<void> {
   const applied = await runMigrations();
