@@ -43,7 +43,3 @@ next-env.d.ts
 
 # local agent tooling
 .agents/
-
-
-docs/
-tasks/
