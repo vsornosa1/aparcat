@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.34825708785105036, 39.458097664580187] },
+      "properties": {
+        "objectid": 138106,
+        "angulo": 89.796999999999997,
+        "idcamara": "10209",
+        "tipocamara": "CF",
+        "descripcio": "Pintor Maella (Av. França)",
+        "url": "https://camaras.valencia.es/camaras/visualizador.html?id=10209",
+        "anggra": 105.28400000000001,
+        "x": 728146.91,
+        "y": 4370970.7
+      }
+    }
+  ]
+}

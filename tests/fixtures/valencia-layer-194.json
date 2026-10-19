@@ -1,0 +1,56 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.341647289, 39.4648] },
+      "properties": {
+        "nombre": "SEVERO OCHOA",
+        "direccion": "Profesor Severo Ochoa",
+        "id_aparcamiento": 78,
+        "numeropol": "S/N",
+        "tipo": 0,
+        "plazastota": 371,
+        "plazaslibr": 365,
+        "ultima_mod": 1792447898000,
+        "objectid": 613,
+        "ocupacion": 98.38274933,
+        "fiwareid": "parking_78"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.3761904, 39.4689833] },
+      "properties": {
+        "nombre": "REINO DE VALENCIA",
+        "direccion": "Reino de Valencia",
+        "id_aparcamiento": 12,
+        "numeropol": "S/N",
+        "tipo": 0,
+        "plazastota": 192,
+        "plazaslibr": -1,
+        "ultima_mod": 0,
+        "objectid": 604,
+        "ocupacion": -1,
+        "fiwareid": "parking_12"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.3747512, 39.4627319] },
+      "properties": {
+        "nombre": "RUZAFA",
+        "direccion": "Ruzafa",
+        "id_aparcamiento": 21,
+        "numeropol": "S/N",
+        "tipo": 0,
+        "plazastota": 173,
+        "plazaslibr": 92,
+        "ultima_mod": 1758522371000,
+        "objectid": 609,
+        "ocupacion": 30.05780347,
+        "fiwareid": "parking_21"
+      }
+    }
+  ]
+}
