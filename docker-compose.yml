@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_USER: parkflow
+      POSTGRES_PASSWORD: parkflow
+      POSTGRES_DB: parkflow
+    ports:
+      # 5434 en el host para no chocar con otros PostgreSQL de la máquina.
+      - '5434:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U parkflow -d parkflow']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  db-data:
