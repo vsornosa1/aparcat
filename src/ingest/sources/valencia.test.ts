@@ -86,8 +86,11 @@ describe('normalización de garajes', () => {
   });
 
   it('descarta una geometría ausente', () => {
-    const feature = { type: 'Feature', geometry: null, properties: {} } as unknown as
-      ParkingFacilityFeature;
+    const feature = {
+      type: 'Feature',
+      geometry: null,
+      properties: {},
+    } as unknown as ParkingFacilityFeature;
 
     expect(parkingFacilityFromFeature(feature)).toBeNull();
   });

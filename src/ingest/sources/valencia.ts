@@ -73,10 +73,22 @@ export const parkingFacilitiesCollection = featureCollection(
 );
 
 export const parkingPredictionsCollection = {
-  1: featureCollection(lineStringGeometry, z.object({ ...predictionBaseProperties, ocupacion_1: z.number() })),
-  6: featureCollection(lineStringGeometry, z.object({ ...predictionBaseProperties, ocupacion_6: z.number() })),
-  12: featureCollection(lineStringGeometry, z.object({ ...predictionBaseProperties, ocupacion_12: z.number() })),
-  24: featureCollection(lineStringGeometry, z.object({ ...predictionBaseProperties, ocupacion_24: z.number() })),
+  1: featureCollection(
+    lineStringGeometry,
+    z.object({ ...predictionBaseProperties, ocupacion_1: z.number() }),
+  ),
+  6: featureCollection(
+    lineStringGeometry,
+    z.object({ ...predictionBaseProperties, ocupacion_6: z.number() }),
+  ),
+  12: featureCollection(
+    lineStringGeometry,
+    z.object({ ...predictionBaseProperties, ocupacion_12: z.number() }),
+  ),
+  24: featureCollection(
+    lineStringGeometry,
+    z.object({ ...predictionBaseProperties, ocupacion_24: z.number() }),
+  ),
 } satisfies Record<PredictionHorizon, z.ZodType>;
 
 export const regulatedParkingMarkingsCollection = featureCollection(
@@ -218,8 +230,7 @@ export function parkingFacilityFromFeature(
 
   return {
     sourceId: String(properties.id_aparcamiento),
-    name:
-      properties.nombre ?? properties.direccion ?? `Aparcamiento ${properties.id_aparcamiento}`,
+    name: properties.nombre ?? properties.direccion ?? `Aparcamiento ${properties.id_aparcamiento}`,
     address: properties.direccion,
     capacity,
     freeSpaces,
@@ -230,7 +241,9 @@ export function parkingFacilityFromFeature(
   };
 }
 
-export function trafficCameraFromFeature(feature: TrafficCameraFeature): ValenciaTrafficCamera | null {
+export function trafficCameraFromFeature(
+  feature: TrafficCameraFeature,
+): ValenciaTrafficCamera | null {
   if (!feature.geometry || feature.geometry.type !== 'Point') return null;
 
   const { longitude, latitude } = toLongitudeLatitude(feature.geometry.coordinates);
@@ -262,8 +275,7 @@ function toDate(value: number | null): Date | null {
 }
 
 type RequestAttempt =
-  | { ok: true; payload: unknown }
-  | { ok: false; error: Error; retryable: boolean };
+  { ok: true; payload: unknown } | { ok: false; error: Error; retryable: boolean };
 
 async function requestJson(url: string, layerId: number, retries: number): Promise<unknown> {
   let lastError: Error = new ValenciaSourceError(`La capa ${layerId} no respondió`, layerId);

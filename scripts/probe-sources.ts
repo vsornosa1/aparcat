@@ -73,7 +73,9 @@ async function checkParkingFacilities(): Promise<void> {
     `Garajes públicos (capa ${layerId}): ${count} registros · ${withData.length} con plazas libres · ${withoutData} sin dato`,
   );
   if (youngest !== null && oldest !== null) {
-    console.log(`  antigüedad del dato: ${youngest} min (más reciente) a ${oldest} min (más antiguo)`);
+    console.log(
+      `  antigüedad del dato: ${youngest} min (más reciente) a ${oldest} min (más antiguo)`,
+    );
   }
   if (withData.length === 0) {
     warnings.push('Ningún garaje devuelve plazas libres; la app mostrará «sin datos».');
@@ -99,7 +101,9 @@ async function checkPredictions(): Promise<void> {
     const collection = await guard(`Predicción ${horizon} h`, layerId, () =>
       fetchValenciaLayer(layerId, parkingPredictionsCollection[horizon], { limit: 25 }),
     );
-    const values = collection.features.map((feature) => predictionValueFromFeature(horizon, feature));
+    const values = collection.features.map((feature) =>
+      predictionValueFromFeature(horizon, feature),
+    );
 
     console.log(
       `Predicción ${horizon} h (capa ${layerId}): ${horizonCount} tramos · muestra de ${values.length} valores ${describe(values)}`,
@@ -157,19 +161,11 @@ async function exportCamerasIfRequested(): Promise<void> {
   });
 
   mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(
-    target,
-    ['idcamara,descripcion,latitud,longitud,url', ...rows].join('\n'),
-    'utf8',
-  );
+  writeFileSync(target, ['idcamara,descripcion,latitud,longitud,url', ...rows].join('\n'), 'utf8');
   console.log(`Anexo de cámaras exportado: ${target} (${rows.length} filas)`);
 }
 
-async function guard<T>(
-  label: string,
-  layerId: number,
-  action: () => Promise<T>,
-): Promise<T> {
+async function guard<T>(label: string, layerId: number, action: () => Promise<T>): Promise<T> {
   try {
     return await action();
   } catch (error) {
