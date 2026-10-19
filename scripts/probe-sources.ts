@@ -66,19 +66,19 @@ async function checkParkingFacilities(): Promise<void> {
     .filter((facility): facility is ValenciaParkingFacility => facility !== null);
 
   const withData = facilities.filter((facility) => facility.freeSpaces !== null);
-  const withoutData = facilities.length - withData.length;
-  const [youngest, oldest] = ageRangeMinutes(withData);
+  const buckets = bucketByAge(facilities);
 
   console.log(
-    `Garajes públicos (capa ${layerId}): ${count} registros · ${withData.length} con plazas libres · ${withoutData} sin dato`,
+    `Garajes públicos (capa ${layerId}): ${count} registros · ${withData.length} con plazas libres · ${facilities.length - withData.length} sin dato`,
   );
-  if (youngest !== null && oldest !== null) {
-    console.log(
-      `  antigüedad del dato: ${youngest} min (más reciente) a ${oldest} min (más antiguo)`,
-    );
+  console.log(
+    `  frescos (≤${FRESH_MINUTES} min): ${buckets.fresh} · recientes: ${buckets.recent} · obsoletos: ${buckets.stale} · sin dato utilizable: ${buckets.unknown}`,
+  );
+  if (buckets.freshestMinutes !== null) {
+    console.log(`  dato más reciente: hace ${buckets.freshestMinutes} min`);
   }
-  if (withData.length === 0) {
-    warnings.push('Ningún garaje devuelve plazas libres; la app mostrará «sin datos».');
+  if (buckets.fresh === 0) {
+    warnings.push('Ningún garaje devuelve plazas libres frescas; la app mostrará «sin datos».');
   }
 }
 
@@ -188,14 +188,43 @@ function checkExpectedCount(
   }
 }
 
-function ageRangeMinutes(facilities: ValenciaParkingFacility[]): [number | null, number | null] {
-  const ages = facilities
-    .map((facility) => facility.sourceUpdatedAt)
-    .filter((date): date is Date => date !== null)
-    .map((date) => Math.round((Date.now() - date.getTime()) / 60_000));
+/** Umbrales provisionales del informe; el módulo de dominio los formaliza en la tarea 4. */
+const FRESH_MINUTES = 20;
+const RECENT_MINUTES = 6 * 60;
 
-  if (ages.length === 0) return [null, null];
-  return [Math.min(...ages), Math.max(...ages)];
+interface AgeBuckets {
+  fresh: number;
+  recent: number;
+  stale: number;
+  unknown: number;
+  freshestMinutes: number | null;
+}
+
+function bucketByAge(facilities: ValenciaParkingFacility[]): AgeBuckets {
+  const buckets: AgeBuckets = {
+    fresh: 0,
+    recent: 0,
+    stale: 0,
+    unknown: 0,
+    freshestMinutes: null,
+  };
+
+  for (const facility of facilities) {
+    if (facility.freeSpaces === null || facility.sourceUpdatedAt === null) {
+      buckets.unknown += 1;
+      continue;
+    }
+
+    const minutes = Math.round((Date.now() - facility.sourceUpdatedAt.getTime()) / 60_000);
+    buckets.freshestMinutes =
+      buckets.freshestMinutes === null ? minutes : Math.min(buckets.freshestMinutes, minutes);
+
+    if (minutes <= FRESH_MINUTES) buckets.fresh += 1;
+    else if (minutes <= RECENT_MINUTES) buckets.recent += 1;
+    else buckets.stale += 1;
+  }
+
+  return buckets;
 }
 
 function describe(values: number[]): string {
