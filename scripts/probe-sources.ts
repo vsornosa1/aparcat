@@ -101,12 +101,13 @@ async function checkPredictions(): Promise<void> {
     const collection = await guard(`Predicción ${horizon} h`, layerId, () =>
       fetchValenciaLayer(layerId, parkingPredictionsCollection[horizon], { limit: 25 }),
     );
-    const values = collection.features.map((feature) =>
-      predictionValueFromFeature(horizon, feature),
-    );
+    const values = collection.features
+      .map((feature) => predictionValueFromFeature(horizon, feature))
+      .filter((value): value is number => value !== null);
+    const nulls = collection.features.length - values.length;
 
     console.log(
-      `Predicción ${horizon} h (capa ${layerId}): ${horizonCount} tramos · muestra de ${values.length} valores ${describe(values)}`,
+      `Predicción ${horizon} h (capa ${layerId}): ${horizonCount} tramos · muestra de ${values.length} valores ${describe(values)}${nulls > 0 ? ` · ${nulls} nulos` : ''}`,
     );
   }
 

@@ -28,6 +28,7 @@ Todas las comprobaciones se hicieron con peticiones reales desde este repositori
   - `> 80` → baja probabilidad
 - **Cobertura limitada:** la extensión de la capa cubre la zona centro (aproximadamente la Zona de Bajas Emisiones), no toda la ciudad.
 - **Frescura:** no expone campo de fecha; solo se puede saber cuándo la consultamos nosotros. Hay que medir la cadencia de actualización con el probe antes de prometer «tiempo real» para esta capa.
+- **Valores nulos:** 2 de los 257 tramos devuelven `null` en cada horizonte. Se tratan como ausencia de dato y no borran la predicción anterior; su antigüedad la marcará como obsoleta.
 
 ## 3. Inventario de aparcamiento regulado ORA (capa 205)
 

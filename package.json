@@ -14,11 +14,13 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:integration": "vitest run tests/integration",
+    "test": "vitest run src",
+    "test:watch": "vitest src",
+    "test:coverage": "vitest run src --coverage",
+    "test:integration": "vitest run tests/integration --no-file-parallelism",
     "db:migrate": "tsx scripts/migrate.ts",
+    "ingest": "tsx scripts/ingest.ts",
+    "ingest:watch": "tsx scripts/ingest.ts --watch",
     "probe:sources": "tsx scripts/probe-sources.ts"
   },
   "dependencies": {

@@ -95,19 +95,19 @@ export const parkingPredictionsCollection: Record<
 > = {
   1: featureCollection(
     lineStringGeometry,
-    z.object({ ...predictionBaseProperties, ocupacion_1: z.number() }),
+    z.object({ ...predictionBaseProperties, ocupacion_1: z.number().nullable() }),
   ),
   6: featureCollection(
     lineStringGeometry,
-    z.object({ ...predictionBaseProperties, ocupacion_6: z.number() }),
+    z.object({ ...predictionBaseProperties, ocupacion_6: z.number().nullable() }),
   ),
   12: featureCollection(
     lineStringGeometry,
-    z.object({ ...predictionBaseProperties, ocupacion_12: z.number() }),
+    z.object({ ...predictionBaseProperties, ocupacion_12: z.number().nullable() }),
   ),
   24: featureCollection(
     lineStringGeometry,
-    z.object({ ...predictionBaseProperties, ocupacion_24: z.number() }),
+    z.object({ ...predictionBaseProperties, ocupacion_24: z.number().nullable() }),
   ),
 };
 
@@ -234,6 +234,38 @@ export async function fetchValenciaLayer<T>(
   return parsed.data;
 }
 
+export interface FeatureCollectionLike<F> {
+  features: F[];
+  exceededTransferLimit?: boolean;
+}
+
+/**
+ * Recorre una capa paginando con `resultOffset`. ArcGIS limita cada respuesta a
+ * `maxRecordCount` (2.000 por defecto en este servicio).
+ */
+export async function fetchAllValenciaFeatures<F>(
+  layerId: number,
+  schema: z.ZodType<FeatureCollectionLike<F>>,
+  options: { pageSize?: number; where?: string; maxPages?: number } = {},
+): Promise<F[]> {
+  const pageSize = options.pageSize ?? 2_000;
+  const maxPages = options.maxPages ?? 50;
+  const features: F[] = [];
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const collection = await fetchValenciaLayer(layerId, schema, {
+      where: options.where,
+      limit: pageSize,
+      offset: page * pageSize,
+    });
+    features.push(...collection.features);
+
+    if (!collection.exceededTransferLimit && collection.features.length < pageSize) break;
+  }
+
+  return features;
+}
+
 export function parkingFacilityFromFeature(
   feature: ParkingFacilityFeature,
 ): ValenciaParkingFacility | null {
@@ -280,9 +312,10 @@ export function trafficCameraFromFeature(
 export function predictionValueFromFeature(
   horizon: PredictionHorizon,
   feature: ValenciaPredictionFeature,
-): number {
+): number | null {
   const field = predictionFieldByHorizon[horizon];
   const value = feature.properties[field];
+  if (value === null) return null;
   if (typeof value !== 'number') {
     throw new Error(`El tramo ${feature.properties.id_tramo} no trae el campo ${field}`);
   }

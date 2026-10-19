@@ -6,6 +6,7 @@ import {
   ValenciaSchemaError,
   ValenciaSourceError,
   countValenciaLayer,
+  fetchAllValenciaFeatures,
   fetchValenciaLayer,
   parkingFacilitiesCollection,
   parkingFacilityFromFeature,
@@ -25,6 +26,24 @@ function jsonResponse(payload: unknown, status = 200): Response {
     status,
     headers: { 'content-type': 'application/json' },
   });
+}
+
+function cameraFeature(objectid: number) {
+  return {
+    type: 'Feature' as const,
+    geometry: { type: 'Point' as const, coordinates: [-0.348257, 39.458097] },
+    properties: {
+      objectid,
+      angulo: 90,
+      idcamara: String(objectid),
+      tipocamara: 'CF',
+      descripcio: `Cámara ${objectid}`,
+      url: `https://camaras.valencia.es/camaras/visualizador.html?id=${objectid}`,
+      anggra: 100,
+      x: 728146,
+      y: 4370970,
+    },
+  };
 }
 
 const fetchMock = vi.fn();
@@ -157,6 +176,54 @@ describe('fetchValenciaLayer', () => {
   });
 });
 
+describe('fetchAllValenciaFeatures', () => {
+  it('pagina hasta que la capa deja de tener más registros', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          type: 'FeatureCollection',
+          exceededTransferLimit: true,
+          features: [cameraFeature(1), cameraFeature(2)],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          type: 'FeatureCollection',
+          features: [cameraFeature(3)],
+        }),
+      );
+
+    const features = await fetchAllValenciaFeatures(
+      VALENCIA_LAYERS.trafficCameras,
+      trafficCamerasCollection,
+      { pageSize: 2 },
+    );
+
+    expect(features).toHaveLength(3);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('resultOffset=0');
+    expect(String(fetchMock.mock.calls[1][0])).toContain('resultOffset=2');
+  });
+
+  it('se detiene al alcanzar el máximo de páginas', async () => {
+    fetchMock.mockImplementation(async () =>
+      jsonResponse({
+        type: 'FeatureCollection',
+        exceededTransferLimit: true,
+        features: [cameraFeature(1)],
+      }),
+    );
+
+    const features = await fetchAllValenciaFeatures(
+      VALENCIA_LAYERS.trafficCameras,
+      trafficCamerasCollection,
+      { pageSize: 1, maxPages: 3 },
+    );
+
+    expect(features).toHaveLength(3);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+});
+
 describe('normalización de cámaras y predicciones', () => {
   it('extrae la cámara con su visor oficial', () => {
     const feature = trafficCamerasCollection.parse(fixture('valencia-layer-190.json')).features[0];
@@ -174,5 +241,16 @@ describe('normalización de cámaras y predicciones', () => {
 
     expect(predictionValueFromFeature(1, features[0])).toBe(42);
     expect(predictionValueFromFeature(1, features[1])).toBe(88);
+  });
+
+  it('trata una ocupación nula como ausencia de dato', () => {
+    const payload = structuredClone(fixture('valencia-layer-254.json')) as {
+      features: { properties: Record<string, unknown> }[];
+    };
+    payload.features[0].properties.ocupacion_1 = null;
+
+    const feature = parkingPredictionsCollection[1].parse(payload).features[0];
+
+    expect(predictionValueFromFeature(1, feature)).toBeNull();
   });
 });

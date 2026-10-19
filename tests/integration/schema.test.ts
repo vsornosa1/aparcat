@@ -21,6 +21,7 @@ const expectedColumns: Record<string, string[]> = {
     'geom',
   ],
   parking_segments: ['id', 'street_name', 'zone_color', 'fetched_at', 'geom'],
+  ora_markings: ['id', 'color', 'fetched_at', 'geom'],
   occupancy_predictions: [
     'segment_id',
     'horizon_hours',
@@ -37,15 +38,7 @@ const expectedColumns: Record<string, string[]> = {
     'expires_at',
     'geom',
   ],
-  ingest_runs: [
-    'id',
-    'source',
-    'status',
-    'started_at',
-    'finished_at',
-    'records_upserted',
-    'error',
-  ],
+  ingest_runs: ['id', 'source', 'status', 'started_at', 'finished_at', 'records_upserted', 'error'],
 };
 
 describe.skipIf(!hasDatabase)('esquema PostGIS', () => {

@@ -1,0 +1,37 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.3919990026502238, 39.472090832576619, 0],
+          [-0.3916886705262021, 39.471646940077832, 0]
+        ]
+      },
+      "properties": {
+        "objectid": 1,
+        "id_tramo": 2411,
+        "ocupacion_24": 70,
+        "nombre_via": "Carrer Martí L´humà"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.39097894364924107, 39.471937308079454, 0],
+          [-0.39140232312211853, 39.47176663619026, 0]
+        ]
+      },
+      "properties": {
+        "objectid": 2,
+        "id_tramo": 2412,
+        "ocupacion_24": 80,
+        "nombre_via": "Carrer Literat Gabriel Miró"
+      }
+    }
+  ]
+}

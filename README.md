@@ -42,17 +42,17 @@ Abre <http://localhost:3000>. La base de datos escucha en el puerto **5434** par
 
 ## Scripts
 
-| Comando | Qué hace |
-| --- | --- |
-| `npm run dev` | Servidor de desarrollo |
-| `npm run build` | Build de producción |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript sin emitir |
-| `npm test` | Pruebas unitarias |
-| `npm run test:integration` | Pruebas contra PostgreSQL (requiere Docker y migraciones) |
-| `npm run test:coverage` | Cobertura con umbrales |
-| `npm run db:migrate` | Aplica las migraciones pendientes |
-| `npm run probe:sources` | Verifica que las fuentes municipales siguen respondiendo con el esquema esperado |
+| Comando                    | Qué hace                                                                         |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| `npm run dev`              | Servidor de desarrollo                                                           |
+| `npm run build`            | Build de producción                                                              |
+| `npm run lint`             | ESLint                                                                           |
+| `npm run typecheck`        | TypeScript sin emitir                                                            |
+| `npm test`                 | Pruebas unitarias                                                                |
+| `npm run test:integration` | Pruebas contra PostgreSQL (requiere Docker y migraciones)                        |
+| `npm run test:coverage`    | Cobertura con umbrales                                                           |
+| `npm run db:migrate`       | Aplica las migraciones pendientes                                                |
+| `npm run probe:sources`    | Verifica que las fuentes municipales siguen respondiendo con el esquema esperado |
 
 El probe admite exportar el anexo de cámaras para la solicitud municipal:
 

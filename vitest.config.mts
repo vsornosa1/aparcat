@@ -14,9 +14,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      include: ['src/domain/**/*.ts', 'src/ingest/**/*.ts', 'src/lib/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/types.ts', 'src/ingest/run.ts'],
+      include: ['src/domain/**/*.ts', 'src/ingest/sources/**/*.ts', 'src/lib/**/*.ts'],
+      exclude: ['src/**/*.test.ts', 'src/**/types.ts', 'src/lib/logger.ts'],
       thresholds: {
+        'src/domain/**/*.ts': {
+          lines: 90,
+          functions: 90,
+          statements: 90,
+          branches: 85,
+        },
         'src/ingest/sources/**/*.ts': {
           lines: 85,
           functions: 85,

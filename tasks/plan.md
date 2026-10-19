@@ -126,15 +126,15 @@ Detalle completo, criterios de aceptación y verificación en [todo.md](./todo.m
 
 ### Fase 1 — Ingesta y dominio
 
-- [ ] Tarea 4: Reglas de dominio con pruebas
-- [ ] Tarea 5: Ingesta de garajes públicos en vivo
-- [ ] Tarea 6: Ingesta de tramos ORA y predicciones
+- [x] Tarea 4: Reglas de dominio con pruebas
+- [x] Tarea 5: Ingesta de garajes públicos en vivo
+- [x] Tarea 6: Ingesta de tramos ORA y predicciones
 
 ### Checkpoint B
 
-- [ ] Un ciclo de ingesta deja la base de datos con garajes, tramos y cuatro horizontes
-- [ ] Los fallos parciales no borran datos anteriores
-- [ ] Cobertura del dominio ≥ 90 %
+- [x] Un ciclo de ingesta deja la base de datos con garajes, tramos y cuatro horizontes
+- [x] Los fallos parciales no borran datos anteriores
+- [x] Cobertura del dominio ≥ 90 %
 
 ### Fase 2 — Flujo principal
 

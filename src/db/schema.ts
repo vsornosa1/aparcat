@@ -84,6 +84,17 @@ export const availabilityReports = pgTable(
   ],
 );
 
+export const oraMarkings = pgTable(
+  'ora_markings',
+  {
+    id: text('id').primaryKey(),
+    color: text('color'),
+    fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull(),
+    geom: lineStringGeometry('geom').notNull(),
+  },
+  (table) => [index('ora_markings_geom_idx').using('gist', table.geom)],
+);
+
 export const ingestRuns = pgTable(
   'ingest_runs',
   {

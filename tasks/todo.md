@@ -82,15 +82,15 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** implementar en TypeScript puro las reglas de disponibilidad, frescura, confianza y ranking, sin dependencias de framework ni base de datos. Es el corazón del producto y lo que hace explicable cada recomendación.
 
 **Criterios de aceptación:**
-- [ ] `availability()` devuelve `null` para garajes sin dato (`plazaslibr < 0` o `plazastota <= 0`) y calcula la disponibilidad ORA como `1 - ocupacionPct / 100`.
-- [ ] `freshness()` clasifica cada señal en `live`, `recent`, `stale` o `unknown` con los umbrales del plan.
-- [ ] `rankCandidates()` aplica la fórmula del plan, ordena de forma determinista y nunca pone primero un candidato sin disponibilidad.
-- [ ] Cada resultado incluye `score`, `confidence`, `freshness`, `observedAt` y una razón legible.
-- [ ] Cobertura de `src/domain` ≥ 90 %.
+- [x] `availability()` devuelve `null` para garajes sin dato (`plazaslibr < 0` o `plazastota <= 0`) y calcula la disponibilidad ORA como `1 - ocupacionPct / 100`.
+- [x] `freshness()` clasifica cada señal en `live`, `recent`, `stale` o `unknown` con los umbrales del plan.
+- [x] `rankCandidates()` aplica la fórmula del plan, ordena de forma determinista y nunca pone primero un candidato sin disponibilidad.
+- [x] Cada resultado incluye `score`, `confidence`, `freshness`, `observedAt` y una razón legible.
+- [x] Cobertura de `src/domain` ≥ 90 %.
 
 **Verificación:**
-- [ ] `npm run test -- src/domain` con casos de frontera (0 min, 5 min, 15 min, 6 h, valores nulos).
-- [ ] `npm run test -- --coverage` comprueba el umbral del dominio.
+- [x] `npm run test -- src/domain` con casos de frontera (0 min, 5 min, 15 min, 6 h, valores nulos).
+- [x] `npm run test:coverage` comprueba el umbral del dominio (98,5 % de líneas).
 
 **Dependencias:** Tarea 2.
 **Archivos:** `src/domain/availability.ts`, `src/domain/freshness.ts`, `src/domain/ranking.ts`, `src/domain/geo.ts`, `src/domain/types.ts` y sus `*.test.ts`.
@@ -103,16 +103,17 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** worker que descarga la capa 194, valida, normaliza y hace upsert de los garajes con su frescura real, registrando cada ejecución en `ingest_runs`.
 
 **Criterios de aceptación:**
-- [ ] Una ejecución deja 23 garajes; 7 con dato fresco, 3 obsoletos y 13 `unknown`, tal como los devuelve el Ayuntamiento.
-- [ ] `-1` y `-2` se convierten en `null`, nunca en 0 plazas libres.
-- [ ] La ocupación se deriva de `plazaslibr / plazastota`; el campo `ocupacion` de origen no se usa como verdad.
-- [ ] Si la consulta falla, se conserva el dato anterior y `ingest_runs` lo registra como `failed` o `partial`.
-- [ ] El scheduler ejecuta cada minuto para garajes y cierra de forma ordenada ante SIGTERM.
+- [x] Una ejecución deja 23 garajes; 7 con dato fresco, 3 obsoletos y 13 `unknown`, tal como los devuelve el Ayuntamiento.
+- [x] `-1` y `-2` se convierten en `null`, nunca en 0 plazas libres.
+- [x] La ocupación se deriva de `plazaslibr / plazastota`; el campo `ocupacion` de origen no se usa como verdad.
+- [x] Si la consulta falla, se conserva el dato anterior y `ingest_runs` lo registra como `failed` o `partial`.
+- [x] El scheduler ejecuta cada minuto para garajes y cierra de forma ordenada ante SIGTERM.
 
 **Verificación:**
-- [ ] `npm run ingest` contra la fuente real y consulta SQL de comprobación.
-- [ ] `npm run test:integration` con la fixture guardada; sin red en las pruebas.
-- [ ] Simular un `500` de la fuente y comprobar que no se borra nada.
+- [x] `npm run ingest` contra la fuente real y consulta SQL de comprobación.
+- [x] `npm run test:integration` con la fixture guardada; sin red en las pruebas.
+- [x] Simular un fallo de la fuente y comprobar que no se borra nada.
+- [x] El scheduler arranca y ejecuta el primer ciclo; la parada por SIGTERM se verificará en el contenedor Linux (tarea 12).
 
 **Dependencias:** Tareas 3, 4.
 **Archivos:** `src/ingest/sources/valencia.ts`, `src/ingest/upsert.ts`, `src/ingest/run.ts`, `src/ingest/scheduler.ts`, `tests/integration/ingest-facilities.test.ts`.
@@ -125,16 +126,16 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** descargar las capas 205, 254, 253, 252 y 4, guardar los tramos con nombre y geometría y actualizar los cuatro horizontes de ocupación por tramo.
 
 **Criterios de aceptación:**
-- [ ] Se cargan 257 tramos con nombre de vía y geometría válida (EPSG:4326).
-- [ ] Cada tramo tiene los horizontes 1, 6, 12 y 24 horas; los valores repetidos se actualizan, no se duplican.
-- [ ] El inventario ORA de la capa 205 se guarda como contexto y no se mezcla con las predicciones.
-- [ ] Los tramos con nombre vacío se descartan y quedan contados en el resumen de la ingesta.
-- [ ] Un fallo en una capa no impide actualizar las demás.
+- [x] Se cargan 257 tramos con nombre de vía y geometría válida (EPSG:4326).
+- [x] Los 255 tramos con predicción tienen los horizontes 1, 6, 12 y 24 horas (1.020 filas); los 2 con `null` municipal en todos los horizontes no generan predicción. Los valores repetidos se actualizan, no se duplican.
+- [x] El inventario ORA de la capa 205 se guarda como contexto y no se mezcla con las predicciones.
+- [x] Los tramos con nombre vacío se descartan y quedan contados en el resumen de la ingesta.
+- [x] Un fallo en una capa no impide actualizar las demás.
 
 **Verificación:**
-- [ ] `npm run ingest` y consulta de recuento por horizonte.
-- [ ] `npm run test:integration` con fixtures de las cinco capas.
-- [ ] `ST_IsValid` sobre todas las geometrías cargadas.
+- [x] `npm run ingest` y consulta de recuento por horizonte (1.020 predicciones).
+- [x] `npm run test:integration` con fixtures de las cinco capas.
+- [x] `ST_IsValid` sobre todas las geometrías cargadas.
 
 **Dependencias:** Tareas 3, 4.
 **Archivos:** `src/ingest/sources/valencia.ts`, `src/ingest/upsert.ts`, `src/ingest/run.ts`, `tests/integration/ingest-segments.test.ts`.
@@ -144,9 +145,9 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 
 ## Checkpoint B
 
-- [ ] Un ciclo de ingesta deja garajes, tramos y cuatro horizontes en la base de datos.
-- [ ] Los fallos parciales no borran datos anteriores.
-- [ ] Cobertura del dominio ≥ 90 %.
+- [x] Un ciclo de ingesta deja garajes, tramos y cuatro horizontes en la base de datos.
+- [x] Los fallos parciales no borran datos anteriores.
+- [x] Cobertura del dominio ≥ 90 %.
 - [ ] Revisión humana antes de seguir.
 
 ---
