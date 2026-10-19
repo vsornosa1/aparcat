@@ -82,7 +82,7 @@ describe('normalización de garajes', () => {
 
     expect(facility?.sourceId).toBe('78');
     expect(facility?.freeSpaces).toBe(365);
-    expect(facility?.sourceUpdatedAt?.toISOString()).toBe('2026-10-19T21:58:18.000Z');
+    expect(facility?.sourceUpdatedAt?.getTime()).toBe(feature?.properties.ultima_mod);
   });
 
   it('descarta una geometría ausente', () => {

@@ -72,7 +72,27 @@ export const parkingFacilitiesCollection = featureCollection(
   parkingFacilityProperties,
 );
 
-export const parkingPredictionsCollection = {
+export interface ValenciaPredictionFeature {
+  type: 'Feature';
+  geometry: { type: 'LineString'; coordinates: number[][] } | null;
+  properties: {
+    objectid: number;
+    id_tramo: number;
+    nombre_via: string | null;
+    [field: string]: number | string | null;
+  };
+}
+
+export interface ValenciaPredictionCollection {
+  type: 'FeatureCollection';
+  features: ValenciaPredictionFeature[];
+  exceededTransferLimit?: boolean;
+}
+
+export const parkingPredictionsCollection: Record<
+  PredictionHorizon,
+  z.ZodType<ValenciaPredictionCollection>
+> = {
   1: featureCollection(
     lineStringGeometry,
     z.object({ ...predictionBaseProperties, ocupacion_1: z.number() }),
@@ -89,7 +109,7 @@ export const parkingPredictionsCollection = {
     lineStringGeometry,
     z.object({ ...predictionBaseProperties, ocupacion_24: z.number() }),
   ),
-} satisfies Record<PredictionHorizon, z.ZodType>;
+};
 
 export const regulatedParkingMarkingsCollection = featureCollection(
   lineStringGeometry,
@@ -259,10 +279,14 @@ export function trafficCameraFromFeature(
 
 export function predictionValueFromFeature(
   horizon: PredictionHorizon,
-  feature: z.infer<(typeof parkingPredictionsCollection)[PredictionHorizon]>['features'][number],
+  feature: ValenciaPredictionFeature,
 ): number {
   const field = predictionFieldByHorizon[horizon];
-  return (feature.properties as unknown as Record<string, number>)[field];
+  const value = feature.properties[field];
+  if (typeof value !== 'number') {
+    throw new Error(`El tramo ${feature.properties.id_tramo} no trae el campo ${field}`);
+  }
+  return value;
 }
 
 function toLongitudeLatitude(coordinates: number[]): { longitude: number; latitude: number } {
