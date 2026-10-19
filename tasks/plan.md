@@ -114,15 +114,15 @@ Detalle completo, criterios de aceptación y verificación en [todo.md](./todo.m
 
 ### Fase 0 — Validación y cimientos
 
-- [ ] Tarea 1: Probe reproducible de fuentes municipales
-- [ ] Tarea 2: Andamiaje de la app y puertas de calidad
-- [ ] Tarea 3: Base de datos PostGIS con esquema y migraciones
+- [x] Tarea 1: Probe reproducible de fuentes municipales
+- [x] Tarea 2: Andamiaje de la app y puertas de calidad
+- [x] Tarea 3: Base de datos PostGIS con esquema y migraciones
 
 ### Checkpoint A
 
-- [ ] El probe confirma las fuentes y la documentación coincide con la realidad
-- [ ] `npm run lint`, `typecheck` y `test` pasan en un clon limpio
-- [ ] `docker compose up -d db` + migraciones funcionan desde cero
+- [x] El probe confirma las fuentes y la documentación coincide con la realidad
+- [x] `npm run lint`, `typecheck` y `test` pasan en un clon limpio
+- [x] `docker compose up -d db` + migraciones funcionan desde cero
 
 ### Fase 1 — Ingesta y dominio
 
