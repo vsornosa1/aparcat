@@ -1,6 +1,7 @@
 import { ingestParkingFacilities } from './facilities';
 import { purgeExpiredReports } from './retention';
 import { ingestOraMarkings, ingestRegulatedParking } from './segments';
+import { ingestTrafficCameras } from './cameras';
 import type { IngestResult } from './types';
 
 /** Ejecuta todas las ingestas una vez, en orden, para no saturar al Ayuntamiento. */
@@ -10,6 +11,7 @@ export async function runIngestionOnce(): Promise<IngestResult[]> {
   results.push(await ingestParkingFacilities());
   results.push(await ingestRegulatedParking());
   results.push(await ingestOraMarkings());
+  results.push(await ingestTrafficCameras());
   results.push({
     source: 'report_cleanup',
     status: 'success',

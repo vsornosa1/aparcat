@@ -41,6 +41,17 @@ export async function seedNearbyFixtures(sql: Sql): Promise<void> {
       ('spot_free', 'seed', now() + interval '15 minutes', ST_SetSRID(ST_MakePoint(10.0015, 10.0002), 4326)),
       ('area_full', 'seed', now() + interval '15 minutes', ST_SetSRID(ST_MakePoint(10.001, 10.001), 4326))
   `;
+
+  await sql`
+    insert into traffic_cameras (id, description, url, fetched_at, geom)
+    values (
+      'near-camera',
+      'Cámara de prueba',
+      'https://camaras.valencia.es/camaras/visualizador.html?id=10209',
+      ${now},
+      ST_SetSRID(ST_MakePoint(10.001, 10.001), 4326)
+    )
+  `;
 }
 
 export async function cleanupNearbyFixtures(sql: Sql): Promise<void> {
@@ -54,4 +65,5 @@ export async function cleanupNearbyFixtures(sql: Sql): Promise<void> {
   `;
   await sql`delete from parking_segments where id like 'near-%'`;
   await sql`delete from parking_facilities where id like 'near-%'`;
+  await sql`delete from traffic_cameras where id like 'near-%'`;
 }

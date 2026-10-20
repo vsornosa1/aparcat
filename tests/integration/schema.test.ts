@@ -22,6 +22,7 @@ const expectedColumns: Record<string, string[]> = {
   ],
   parking_segments: ['id', 'street_name', 'zone_color', 'fetched_at', 'geom'],
   ora_markings: ['id', 'color', 'fetched_at', 'geom'],
+  traffic_cameras: ['id', 'description', 'url', 'fetched_at', 'geom'],
   occupancy_predictions: [
     'segment_id',
     'horizon_hours',

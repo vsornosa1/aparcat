@@ -33,10 +33,16 @@ describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
   it('devuelve las capas del mapa dentro del bbox', async () => {
     const response = await loadMapData(TEST_BOUNDS, new Date());
 
-    expect(response.meta).toMatchObject({ segments: 1, facilities: 2, reports: 2 });
+    expect(response.meta).toMatchObject({ segments: 1, facilities: 2, reports: 2, cameras: 1 });
     expect(response.layers.segments.features).toHaveLength(1);
     expect(response.layers.facilities.features).toHaveLength(2);
     expect(response.layers.reports.features).toHaveLength(2);
+    expect(response.layers.cameras.features).toHaveLength(1);
+    expect(response.layers.cameras.features[0].properties).toMatchObject({
+      layer: 'camera',
+      id: 'near-camera',
+      description: 'Cámara de prueba',
+    });
 
     const segment = response.layers.segments.features[0];
     expect(segment.geometry.type).toBe('LineString');

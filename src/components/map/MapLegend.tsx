@@ -5,6 +5,7 @@ const ITEMS = [
   { color: 'bg-zinc-400', label: 'Sin datos' },
   { color: 'bg-blue-600', label: 'Hueco reportado' },
   { color: 'bg-orange-500', label: 'Zona llena' },
+  { color: 'bg-slate-600', label: 'Cámara (solo ubicación)' },
 ];
 
 export function MapLegend() {

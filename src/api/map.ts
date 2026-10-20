@@ -4,6 +4,7 @@ import { ageMinutes, classifyFreshness, confidenceFor } from '@/domain/freshness
 import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 import { attribution } from './attribution';
 import {
+  type MapCameraProperties,
   type MapFacilityProperties,
   type MapReportProperties,
   type MapResponse,
@@ -27,6 +28,7 @@ export const DEFAULT_MAP_BOUNDS: MapBounds = {
 const MAX_SEGMENTS = 500;
 const MAX_FACILITIES = 100;
 const MAX_REPORTS = 200;
+const MAX_CAMERAS = 300;
 
 export class InvalidBoundsError extends Error {
   constructor(message: string) {
@@ -76,10 +78,17 @@ interface ReportRow {
   geometry: Point;
 }
 
+interface CameraRow {
+  id: string;
+  description: string | null;
+  url: string;
+  geometry: Point;
+}
+
 export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResponse> {
   const sql = getSql();
 
-  const [segmentRows, facilityRows, reportRows] = await Promise.all([
+  const [segmentRows, facilityRows, reportRows, cameraRows] = await Promise.all([
     sql<SegmentRow[]>`
       select
         s.id,
@@ -118,6 +127,17 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
       where expires_at > now()
         and geom && ST_MakeEnvelope(${bounds.minLng}, ${bounds.minLat}, ${bounds.maxLng}, ${bounds.maxLat}, 4326)
       limit ${MAX_REPORTS}
+    `,
+    sql<CameraRow[]>`
+      select
+        id,
+        description,
+        url,
+        ST_AsGeoJSON(geom)::json as geometry
+      from traffic_cameras
+      where geom && ST_MakeEnvelope(${bounds.minLng}, ${bounds.minLat}, ${bounds.maxLng}, ${bounds.maxLat}, 4326)
+      order by id
+      limit ${MAX_CAMERAS}
     `,
   ]);
 
@@ -183,17 +203,33 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
     })),
   };
 
+  const cameras: FeatureCollection<Point, MapCameraProperties> = {
+    type: 'FeatureCollection',
+    features: cameraRows.map((row): Feature<Point, MapCameraProperties> => ({
+      type: 'Feature',
+      geometry: row.geometry,
+      properties: {
+        layer: 'camera',
+        id: row.id,
+        description: row.description,
+        url: row.url,
+      },
+    })),
+  };
+
   return {
     generatedAt: now.toISOString(),
-    layers: { segments, facilities, reports },
+    layers: { segments, facilities, reports, cameras },
     meta: {
       segments: segments.features.length,
       facilities: facilities.features.length,
       reports: reports.features.length,
+      cameras: cameras.features.length,
       truncated:
         segmentRows.length === MAX_SEGMENTS ||
         facilityRows.length === MAX_FACILITIES ||
-        reportRows.length === MAX_REPORTS,
+        reportRows.length === MAX_REPORTS ||
+        cameraRows.length === MAX_CAMERAS,
     },
     attribution,
   };

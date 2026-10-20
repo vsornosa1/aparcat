@@ -95,6 +95,18 @@ export const oraMarkings = pgTable(
   (table) => [index('ora_markings_geom_idx').using('gist', table.geom)],
 );
 
+export const trafficCameras = pgTable(
+  'traffic_cameras',
+  {
+    id: text('id').primaryKey(),
+    description: text('description'),
+    url: text('url').notNull(),
+    fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull(),
+    geom: pointGeometry('geom').notNull(),
+  },
+  (table) => [index('traffic_cameras_geom_idx').using('gist', table.geom)],
+);
+
 export const ingestRuns = pgTable(
   'ingest_runs',
   {

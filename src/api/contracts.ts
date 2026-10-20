@@ -100,6 +100,13 @@ export const createdReportSchema = z.object({
 
 export type CreatedReport = z.infer<typeof createdReportSchema>;
 
+export interface MapCameraProperties {
+  layer: 'camera';
+  id: string;
+  description: string | null;
+  url: string;
+}
+
 export interface MapSegmentProperties {
   layer: 'segment';
   id: string;
@@ -137,11 +144,13 @@ export interface MapResponse {
     segments: FeatureCollection<LineString, MapSegmentProperties>;
     facilities: FeatureCollection<Point, MapFacilityProperties>;
     reports: FeatureCollection<Point, MapReportProperties>;
+    cameras: FeatureCollection<Point, MapCameraProperties>;
   };
   meta: {
     segments: number;
     facilities: number;
     reports: number;
+    cameras: number;
     truncated: boolean;
   };
   attribution: Attribution;
