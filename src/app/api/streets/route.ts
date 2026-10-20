@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { errorResponse, formatZodError, jsonResponse } from '@/api/http';
 import { findStreets } from '@/api/streets';
 import { logger } from '@/lib/logger';
+import { getRequestId } from '@/lib/request-id';
 
 const querySchema = z.object({
   q: z.string().trim().min(2).max(80),
@@ -22,7 +23,7 @@ export async function GET(request: Request): Promise<Response> {
       { headers: { 'cache-control': 'public, s-maxage=300, stale-while-revalidate=600' } },
     );
   } catch (error) {
-    logger.error({ err: error }, 'Fallo en /api/streets');
+    logger.error({ err: error, requestId: getRequestId(request) }, 'Fallo en /api/streets');
     return errorResponse(500, 'internal_error', 'No se pudieron buscar calles');
   }
 }

@@ -46,3 +46,7 @@ next-env.d.ts
 
 # generated MapLibre worker
 /public/maplibre-gl-worker.mjs
+
+# playwright artifacts
+/test-results/
+/playwright-report/

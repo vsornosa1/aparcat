@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { ingestTrafficCameras } from './cameras';
 import { ingestParkingFacilities } from './facilities';
-import { purgeExpiredReports } from './retention';
+import { purgeExpiredReports, purgeOldIngestRuns } from './retention';
 import { ingestOraMarkings, ingestRegulatedParking } from './segments';
 import type { IngestResult } from './types';
 
@@ -25,6 +25,15 @@ const JOBS: ScheduledJob[] = [
       source: 'report_cleanup',
       status: 'success',
       records: await purgeExpiredReports(),
+    }),
+  },
+  {
+    name: 'ingest_runs_cleanup',
+    intervalMs: 24 * 60 * MINUTE,
+    run: async () => ({
+      source: 'ingest_runs_cleanup',
+      status: 'success',
+      records: await purgeOldIngestRuns(),
     }),
   },
 ];

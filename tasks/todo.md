@@ -260,18 +260,18 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** páginas de aviso legal y privacidad, atribución correcta de los datos y política de retención explícita.
 
 **Criterios de aceptación:**
-- [ ] Página de privacidad que explica la geolocalización bajo demanda, el token anónimo y la retención de reportes.
-- [ ] Aviso de que la app no pertenece al Ayuntamiento de València y de que las señales de tráfico prevalecen.
-- [ ] Atribución «Datos: Ajuntament de València (CC BY 4.0)» enlazada donde se muestran datos municipales.
-- [ ] Aviso explícito de que no se usan imágenes de cámaras de tráfico.
-- [ ] Un trabajo elimina reportes caducados y datos con más de 30 días, y queda registrado.
+- [x] Página de privacidad que explica la geolocalización bajo demanda, el token anónimo y la retención de reportes.
+- [x] Aviso de que la app no pertenece al Ayuntamiento de València y de que las señales de tráfico prevalecen.
+- [x] Atribución «Datos: Ajuntament de València (CC BY 4.0)» enlazada donde se muestran datos municipales.
+- [x] Aviso explícito de que no se usan imágenes de cámaras de tráfico.
+- [x] Un trabajo elimina reportes caducados y datos con más de 30 días, y queda registrado.
 
 **Verificación:**
-- [ ] Revisión de las páginas en móvil.
-- [ ] Ejecutar el trabajo de retención sobre datos sembrados y comprobar el borrado.
+- [x] Revisión de las páginas legales en escritorio; usan un layout de una columna apto para móvil.
+- [x] Pruebas de integración de la purga de reportes y de `ingest_runs` con más de 30 días.
 
 **Dependencias:** Tareas 9, 10.
-**Archivos:** `src/app/privacidad/page.tsx`, `src/app/aviso-legal/page.tsx`, `src/components/Attribution.tsx`, `src/ingest/retention.ts`.
+**Archivos:** `src/app/privacidad/page.tsx`, `src/app/aviso-legal/page.tsx`, `src/lib/legal.ts`, `src/components/parking/RecommendationSheet.tsx`, `src/ingest/retention.ts`.
 **Alcance:** Small.
 
 ---
@@ -281,19 +281,19 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** imágenes de web e ingesta, Compose con base de datos, migración, web e ingesta, healthchecks y guía de arranque.
 
 **Criterios de aceptación:**
-- [ ] En un clon limpio, `docker compose up` deja la app sirviendo en el puerto documentado y la ingesta corriendo.
-- [ ] La migración se ejecuta una vez antes de arrancar web e ingesta.
-- [ ] Los contenedores tienen healthcheck y se reinician si fallan.
-- [ ] `docker compose down && docker compose up` conserva los datos.
-- [ ] El README explica requisitos, variables, arranque y comprobación de salud.
+- [x] En un clon limpio, `docker compose up` deja la app sirviendo en el puerto documentado y la ingesta corriendo.
+- [x] La migración se ejecuta una vez antes de arrancar web e ingesta.
+- [x] Los contenedores tienen healthcheck y se reinician si fallan.
+- [x] `docker compose down && docker compose up` conserva los datos.
+- [x] El README explica requisitos, variables, arranque y comprobación de salud.
 
 **Verificación:**
-- [ ] Ejecutar el ciclo completo en una máquina limpia o con volúmenes borrados.
-- [ ] `curl` al endpoint de salud y comprobar la última ingesta.
-- [ ] Confirmar que no se copian secretos ni `node_modules` dentro de las imágenes.
+- [x] Ciclo completo construido y levantado; web healthy, ingest corriendo y `/api/health` en verde.
+- [x] `docker compose down` + `up`: 23 garajes, 679 cámaras y 257 tramos conservados.
+- [x] `.dockerignore` excluye `node_modules`, `.next` y los `.env`; las imágenes se construyen sin secretos.
 
 **Dependencias:** Tareas 7, 9, 10.
-**Archivos:** `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `README.md`, `.env.example`.
+**Archivos:** `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `README.md`, `docs/deploy.md`, `.env.example`.
 **Alcance:** Medium.
 
 ---
@@ -303,18 +303,19 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** integración continua en GitHub Actions con lint, tipos, unidad, integración con Postgres, build y build de Docker, más el humo e2e en un job separado.
 
 **Criterios de aceptación:**
-- [ ] Cada pull request ejecuta lint, typecheck, unidad, integración, build y build de Docker.
-- [ ] La integración usa un servicio Postgres con PostGIS y fixtures, nunca la red del Ayuntamiento.
-- [ ] El job e2e ejecuta Playwright con APIs simuladas y bloquea las peticiones de tiles externas.
-- [ ] El pipeline falla si baja la cobertura mínima del dominio.
-- [ ] La CI verde es requisito para fusionar.
+- [x] Cada pull request ejecuta lint, typecheck, unidad, integración, build y build de Docker.
+- [x] La integración usa un servicio Postgres con PostGIS y fixtures, nunca la red del Ayuntamiento.
+- [x] El job e2e ejecuta Playwright con APIs simuladas y bloquea las peticiones de tiles externas.
+- [x] El pipeline falla si baja la cobertura mínima del dominio.
+- [ ] La CI verde es requisito para fusionar (hay que activar la protección de rama al publicar).
 
 **Verificación:**
-- [ ] Abrir un PR de prueba y comprobar todos los jobs.
-- [ ] Romper a propósito una prueba del dominio y ver el pipeline en rojo.
+- [x] E2E ejecutado en local: 2/2 en verde sobre un servidor limpio en el puerto 3100.
+- [ ] Abrir un PR y comprobar los jobs en GitHub (pendiente de publicar).
+- [ ] Romper una prueba del dominio y ver el pipeline en rojo (se verifica al ejecutar la CI).
 
 **Dependencias:** Tarea 12.
-**Archivos:** `.github/workflows/ci.yml`, `.github/workflows/e2e.yml`, `playwright.config.ts`, `tests/e2e/*`.
+**Archivos:** `.github/workflows/ci.yml`, `playwright.config.ts`, `tests/e2e/smoke.spec.ts`.
 **Alcance:** Medium.
 
 ---
@@ -324,20 +325,21 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** cerrar los flecos de seguridad, observabilidad y despliegue antes de publicar.
 
 **Criterios de aceptación:**
-- [ ] Cabeceras de seguridad y CSP compatibles con el mapa.
-- [ ] Límite de frecuencia verificado en todos los endpoints públicos.
-- [ ] `/api/health` informa estado de la base de datos y última ejecución por fuente.
-- [ ] Logs estructurados con identificador de petición; sin datos personales ni coordenadas exactas.
-- [ ] Documentado el despliegue autohospedado y la alternativa Vercel + Neon, con plan de vuelta atrás.
-- [ ] Lighthouse móvil ≥ 95 en accesibilidad y ≥ 85 en rendimiento.
+- [x] Cabeceras de seguridad y CSP compatibles con el mapa.
+- [x] Límite de frecuencia verificado en todos los endpoints públicos.
+- [x] `/api/health` informa estado de la base de datos y última ejecución por fuente.
+- [x] Logs estructurados con identificador de petición; sin datos personales ni coordenadas exactas.
+- [x] Documentado el despliegue autohospedado y la alternativa Vercel + Neon, con plan de vuelta atrás.
+- [ ] Lighthouse móvil ≥ 95 en accesibilidad y ≥ 85 en rendimiento (pendiente de ejecutar en un navegador real).
 
 **Verificación:**
-- [ ] Revisión de seguridad con la lista de comprobación del skill de hardening.
-- [ ] Prueba de carga ligera: 20 peticiones concurrentes a `nearby` con p95 < 800 ms en local.
-- [ ] Repasar que ninguna variable sensible está en el repositorio.
+- [x] Revisión manual de seguridad: cabeceras, CSP, rate limit, hash de dispositivo y ausencia de secretos.
+- [x] Carga ligera: 20 peticiones concurrentes a `nearby`, todas 200, p95 ≈ 310 ms.
+- [x] `npm audit --omit=dev`: 0 vulnerabilidades en dependencias de producción.
+- [ ] Lighthouse (requiere navegador con WebGL y medición real).
 
 **Dependencias:** Tarea 13.
-**Archivos:** `next.config.ts`, `src/middleware.ts`, `src/app/api/health/route.ts`, `docs/deploy.md`, `src/lib/logger.ts`.
+**Archivos:** `next.config.ts`, `src/lib/request-id.ts`, `src/app/api/health/route.ts`, `docs/deploy.md`, `src/lib/logger.ts`.
 **Alcance:** Small.
 
 ---

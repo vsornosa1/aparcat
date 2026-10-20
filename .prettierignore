@@ -9,3 +9,5 @@ package-lock.json
 docs
 tasks
 public/maplibre-gl-worker.mjs
+test-results
+playwright-report

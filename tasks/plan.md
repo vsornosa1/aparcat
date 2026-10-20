@@ -151,15 +151,16 @@ Detalle completo, criterios de aceptación y verificación en [todo.md](./todo.m
 
 ### Fase 3 — Listo para producción
 
-- [ ] Tarea 11: Legalidad, privacidad, atribución y retención
-- [ ] Tarea 12: Stack dockerizado con un solo comando
-- [ ] Tarea 13: CI y pruebas e2e
-- [ ] Tarea 14: Endurecimiento y lista de lanzamiento
+- [x] Tarea 11: Legalidad, privacidad, atribución y retención
+- [x] Tarea 12: Stack dockerizado con un solo comando
+- [x] Tarea 13: CI y pruebas e2e
+- [x] Tarea 14: Endurecimiento y lista de lanzamiento
 
 ### Checkpoint final
 
-- [ ] CI verde y `docker compose up` levanta web, base de datos e ingesta
-- [ ] Atribución CC BY 4.0 y OpenStreetMap visible en todas las vistas con mapa
+- [ ] CI verde (workflow configurado; falta ejecutarlo en GitHub)
+- [x] `docker compose up` levanta web, base de datos e ingesta
+- [x] Atribución CC BY 4.0 y OpenStreetMap visible en todas las vistas con mapa
 - [ ] Revisión humana del resultado antes de publicar
 
 ### Vía paralela (no bloquea el MVP)

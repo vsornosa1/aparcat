@@ -2,6 +2,7 @@ import { nearbyQuerySchema, type Horizon } from '@/api/contracts';
 import { errorResponse, formatZodError, jsonResponse } from '@/api/http';
 import { findNearbyCandidates } from '@/api/nearby';
 import { logger } from '@/lib/logger';
+import { getRequestId } from '@/lib/request-id';
 
 export async function GET(request: Request): Promise<Response> {
   const params = new URL(request.url).searchParams;
@@ -29,7 +30,7 @@ export async function GET(request: Request): Promise<Response> {
       headers: { 'cache-control': 'public, s-maxage=30, stale-while-revalidate=60' },
     });
   } catch (error) {
-    logger.error({ err: error }, 'Fallo en /api/parking/nearby');
+    logger.error({ err: error, requestId: getRequestId(request) }, 'Fallo en /api/parking/nearby');
     return errorResponse(500, 'internal_error', 'No se pudieron cargar las recomendaciones');
   }
 }

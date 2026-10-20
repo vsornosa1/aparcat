@@ -98,6 +98,14 @@ export function RecommendationSheet({
           </a>{' '}
           (CC BY 4.0) · Mapas: OpenStreetMap
         </p>
+        <nav aria-label="Información legal" className="flex gap-3 text-[11px] text-zinc-500">
+          <a href="/privacidad" className="hover:text-zinc-700">
+            Privacidad
+          </a>
+          <a href="/aviso-legal" className="hover:text-zinc-700">
+            Aviso legal
+          </a>
+        </nav>
       </footer>
     </div>
   );

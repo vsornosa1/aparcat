@@ -1,5 +1,5 @@
 import { ingestParkingFacilities } from './facilities';
-import { purgeExpiredReports } from './retention';
+import { purgeExpiredReports, purgeOldIngestRuns } from './retention';
 import { ingestOraMarkings, ingestRegulatedParking } from './segments';
 import { ingestTrafficCameras } from './cameras';
 import type { IngestResult } from './types';
@@ -16,6 +16,11 @@ export async function runIngestionOnce(): Promise<IngestResult[]> {
     source: 'report_cleanup',
     status: 'success',
     records: await purgeExpiredReports(),
+  });
+  results.push({
+    source: 'ingest_runs_cleanup',
+    status: 'success',
+    records: await purgeOldIngestRuns(),
   });
 
   return results;

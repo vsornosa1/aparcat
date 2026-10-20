@@ -108,10 +108,6 @@ export function ParkingMap({ data, origin, selected, onOrigin }: ParkingMapProps
       mapInstance = map;
       mapRef.current = map;
 
-      map.on('error', (event) => {
-        if (!map.isStyleLoaded()) console.error('MapLibre:', event.error);
-      });
-
       map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right');
 
       const addLayers = () => {

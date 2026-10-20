@@ -10,3 +10,5 @@ tasks
 .agents
 public/maplibre-gl-worker.mjs
 map-check.png
+test-results
+playwright-report

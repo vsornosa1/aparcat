@@ -3,6 +3,7 @@ import { createReportSchema } from '@/api/contracts';
 import { errorResponse, formatZodError, jsonResponse } from '@/api/http';
 import { createReport, ReportRateLimitError } from '@/api/reports';
 import { logger } from '@/lib/logger';
+import { getRequestId } from '@/lib/request-id';
 
 const deviceIdSchema = z.string().uuid();
 const MAX_BODY_BYTES = 4_096;
@@ -46,7 +47,7 @@ export async function POST(request: Request): Promise<Response> {
       return errorResponse(429, 'rate_limited', error.message);
     }
 
-    logger.error({ err: error }, 'Fallo en POST /api/reports');
+    logger.error({ err: error, requestId: getRequestId(request) }, 'Fallo en POST /api/reports');
     return errorResponse(500, 'internal_error', 'No se pudo guardar el reporte');
   }
 }

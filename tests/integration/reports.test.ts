@@ -180,6 +180,24 @@ describe.skipIf(!hasDatabase)('API de reportes de la comunidad', () => {
     expect(row.count).toBe(0);
   });
 
+  it('purga registros de ingesta con más de 30 días', async () => {
+    await sql`
+      insert into ingest_runs (source, status, started_at)
+      values ('test_old', 'success', now() - interval '31 days')
+    `;
+
+    const { purgeOldIngestRuns } = await import('@/ingest/retention');
+    const removed = await purgeOldIngestRuns();
+
+    expect(removed).toBeGreaterThanOrEqual(1);
+    const [row] = await sql<{ count: number }[]>`
+      select count(*)::int as count
+      from ingest_runs
+      where source = 'test_old'
+    `;
+    expect(row.count).toBe(0);
+  });
+
   function postReport(
     body: unknown,
     options: { deviceId?: string; ip: string },

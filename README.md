@@ -2,7 +2,7 @@
 
 Webapp para encontrar aparcamiento libre cerca de ti en Valencia sin dar vueltas.
 
-> **Estado:** fase 2 completada. El mapa, las recomendaciones y los reportes de la comunidad funcionan con datos reales. Queda la puesta en producción (fase 3).
+> **Estado:** MVP completo y dockerizado. El mapa, las recomendaciones, las cámaras (solo ubicación) y los reportes funcionan con datos reales. La CI está configurada y pendiente de ejecutarse en GitHub.
 
 ## Cómo funciona
 
@@ -41,6 +41,14 @@ npm run dev
 
 Abre <http://localhost:3000>. La base de datos escucha en el puerto **5434** para no chocar con otros PostgreSQL de la máquina.
 
+### Todo con Docker
+
+```bash
+docker compose up -d --build
+```
+
+Levanta PostGIS, aplica migraciones y arranca web e ingesta con healthchecks. Comprueba el estado en `http://localhost:3000/api/health`. Guía completa en [docs/deploy.md](docs/deploy.md).
+
 ## Scripts
 
 | Comando                    | Qué hace                                                                         |
@@ -52,8 +60,9 @@ Abre <http://localhost:3000>. La base de datos escucha en el puerto **5434** par
 | `npm test`                 | Pruebas unitarias                                                                |
 | `npm run test:integration` | Pruebas contra PostgreSQL (requiere Docker y migraciones)                        |
 | `npm run test:coverage`    | Cobertura con umbrales                                                           |
+| `npm run test:e2e`         | Playwright con APIs simuladas                                                    |
 | `npm run db:migrate`       | Aplica las migraciones pendientes                                                |
-| `npm run ingest`           | Ejecuta una ingesta completa (garajes, predicciones, marcas y limpieza)          |
+| `npm run ingest`           | Ejecuta una ingesta completa (garajes, predicciones, marcas, cámaras y limpieza) |
 | `npm run ingest:watch`     | Scheduler continuo: garajes 60 s, predicciones 5 min, marcas 24 h                |
 | `npm run probe:sources`    | Verifica que las fuentes municipales siguen respondiendo con el esquema esperado |
 
@@ -71,6 +80,7 @@ npm run probe:sources -- --export-cameras=docs/legal/camaras-valencia.csv
 | `GET /api/parking/map?bbox=`             | Capas GeoJSON de tramos, garajes y reportes vigentes           |
 | `GET /api/streets?q=`                    | Búsqueda de calle para elegir el origen sin geolocalización    |
 | `POST /api/reports`                      | Reporte anónimo «hueco libre» o «zona llena», caduca en 15 min |
+| `GET /api/health`                        | Estado de la base de datos y última ingesta por fuente         |
 
 Los errores usan siempre `{ "error": { "code": "...", "message": "..." } }`. Los reportes se limitan por dispositivo e IP y solo guardan un hash con sal (`REPORT_SALT`).
 
@@ -108,4 +118,4 @@ Las pruebas unitarias no tocan la red. Las de integración usan el PostgreSQL de
 
 ## Aviso legal
 
-Parkflow no está afiliado al Ajuntament de València. Las señales de tráfico y las normas de estacionamiento prevalecen sobre cualquier recomendación de la app.
+Parkflow no está afiliado al Ajuntament de València. Las señales de tráfico y las normas de estacionamiento prevalecen sobre cualquier recomendación de la app. Consulta [Privacidad](/privacidad) y [Aviso legal](/aviso-legal). El despliegue se documenta en [docs/deploy.md](docs/deploy.md).
