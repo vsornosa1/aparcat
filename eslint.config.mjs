@@ -20,7 +20,7 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ['scripts/**/*.ts'],
+    files: ['scripts/**/*.ts', 'scripts/**/*.mjs'],
     rules: {
       'no-console': 'off',
     },
@@ -33,8 +33,9 @@ const eslintConfig = defineConfig([
     'build/**',
     'coverage/**',
     'next-env.d.ts',
-    // Local tooling and documentation are not linted.
+    // Local tooling and generated assets are not linted.
     '.agents/**',
+    'public/maplibre-gl-worker.mjs',
   ]),
 ]);
 

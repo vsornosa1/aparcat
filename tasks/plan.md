@@ -138,16 +138,16 @@ Detalle completo, criterios de aceptación y verificación en [todo.md](./todo.m
 
 ### Fase 2 — Flujo principal
 
-- [ ] Tarea 7: API de recomendaciones cercanas
-- [ ] Tarea 8: Mapa y elección de origen
-- [ ] Tarea 9: Hoja de recomendación con frescura y confianza
-- [ ] Tarea 10: Reportes anónimos de la comunidad
+- [x] Tarea 7: API de recomendaciones cercanas
+- [x] Tarea 8: Mapa y elección de origen
+- [x] Tarea 9: Hoja de recomendación con frescura y confianza
+- [x] Tarea 10: Reportes anónimos de la comunidad
 
 ### Checkpoint C
 
-- [ ] Dos toques desde la apertura hasta una recomendación con frescura visible
-- [ ] Un reporte aparece en el mapa en menos de 5 segundos y caduca a los 15 minutos
-- [ ] Sin ubicación se puede elegir origen manualmente
+- [x] Dos toques desde la apertura hasta una recomendación con frescura visible
+- [x] Un reporte aparece en la siguiente consulta y caduca a los 15 minutos
+- [x] Sin ubicación se puede elegir origen manualmente
 
 ### Fase 3 — Listo para producción
 

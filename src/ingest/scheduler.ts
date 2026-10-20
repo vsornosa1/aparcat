@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 import { ingestParkingFacilities } from './facilities';
+import { purgeExpiredReports } from './retention';
 import { ingestOraMarkings, ingestRegulatedParking } from './segments';
 import type { IngestResult } from './types';
 
@@ -15,6 +16,15 @@ const JOBS: ScheduledJob[] = [
   { name: 'parking_facilities', intervalMs: MINUTE, run: () => ingestParkingFacilities() },
   { name: 'regulated_parking', intervalMs: 5 * MINUTE, run: () => ingestRegulatedParking() },
   { name: 'ora_markings', intervalMs: 24 * 60 * MINUTE, run: () => ingestOraMarkings() },
+  {
+    name: 'report_cleanup',
+    intervalMs: 60 * MINUTE,
+    run: async () => ({
+      source: 'report_cleanup',
+      status: 'success',
+      records: await purgeExpiredReports(),
+    }),
+  },
 ];
 
 /**

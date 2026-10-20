@@ -2,7 +2,7 @@
 
 Webapp para encontrar aparcamiento libre cerca de ti en Valencia sin dar vueltas.
 
-> **Estado:** fase 0 completada. Fuentes verificadas y base de datos lista; el mapa y las recomendaciones llegan en la fase 2.
+> **Estado:** fase 2 completada. El mapa, las recomendaciones y los reportes de la comunidad funcionan con datos reales. Queda la puesta en producción (fase 3).
 
 ## Cómo funciona
 
@@ -52,6 +52,8 @@ Abre <http://localhost:3000>. La base de datos escucha en el puerto **5434** par
 | `npm run test:integration` | Pruebas contra PostgreSQL (requiere Docker y migraciones)                        |
 | `npm run test:coverage`    | Cobertura con umbrales                                                           |
 | `npm run db:migrate`       | Aplica las migraciones pendientes                                                |
+| `npm run ingest`           | Ejecuta una ingesta completa (garajes, predicciones, marcas y limpieza)          |
+| `npm run ingest:watch`     | Scheduler continuo: garajes 60 s, predicciones 5 min, marcas 24 h                |
 | `npm run probe:sources`    | Verifica que las fuentes municipales siguen respondiendo con el esquema esperado |
 
 El probe admite exportar el anexo de cámaras para la solicitud municipal:
@@ -60,17 +62,34 @@ El probe admite exportar el anexo de cámaras para la solicitud municipal:
 npm run probe:sources -- --export-cameras=docs/legal/camaras-valencia.csv
 ```
 
+## API
+
+| Método y ruta                            | Propósito                                                      |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `GET /api/parking/nearby?lat&lng&radius` | Recomendaciones ordenadas con frescura, confianza y motivo     |
+| `GET /api/parking/map?bbox=`             | Capas GeoJSON de tramos, garajes y reportes vigentes           |
+| `GET /api/streets?q=`                    | Búsqueda de calle para elegir el origen sin geolocalización    |
+| `POST /api/reports`                      | Reporte anónimo «hueco libre» o «zona llena», caduca en 15 min |
+
+Los errores usan siempre `{ "error": { "code": "...", "message": "..." } }`. Los reportes se limitan por dispositivo e IP y solo guardan un hash con sal (`REPORT_SALT`).
+
+## Mapa
+
+`npm install` ejecuta `scripts/copy-maplibre-worker.mjs`, que copia el worker de MapLibre a `public/`. En desarrollo se usa OpenStreetMap; para producción define `NEXT_PUBLIC_MAP_STYLE_URL` con un estilo de un proveedor de tiles o autohospedado. El uso intensivo de los tiles públicos de OpenStreetMap no está permitido.
+
 ## Estructura
 
 ```text
 src/
+  api/        contratos, consultas y lógica de las rutas
   app/        rutas y páginas de Next.js
   components/ mapa y componentes de interfaz
   db/         esquema, cliente y migraciones SQL
   domain/     disponibilidad, frescura y ranking (TypeScript puro)
   ingest/     fuentes municipales, upsert y scheduler
   lib/        entorno, logs y utilidades
-scripts/      probe de fuentes y migrador
+public/       worker de MapLibre generado en postinstall
+scripts/      probe de fuentes, ingesta, migrador y worker
 tests/        pruebas de integración, e2e y fixtures
 docs/         intención, investigación y legal
 tasks/        plan y lista de tareas

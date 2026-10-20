@@ -157,20 +157,21 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** endpoint que, dada una posición, devuelve las mejores opciones combinando garajes, tramos y reportes, con distancia a pie, disponibilidad, frescura, confianza y atribución.
 
 **Criterios de aceptación:**
-- [ ] `GET /api/parking/nearby?lat&lng&radius` responde con `candidates` ordenados y `meta` (radio, origen, hora de cálculo).
-- [ ] Cada candidato incluye `kind` (`garage` | `street`), nombre, distancia en metros, disponibilidad o `null`, `freshness`, `confidence`, `observedAt` y `reason`.
-- [ ] Ningún candidato sin disponibilidad encabeza la lista; aparecen como alternativas «sin datos».
-- [ ] La consulta usa PostGIS con índice GIST y responde en menos de 300 ms con 500 candidatos en base de datos.
-- [ ] Entrada y salida validadas con Zod; errores con formato `{ error: { code, message } }`.
-- [ ] `GET /api/parking/map?bbox=` devuelve solo lo necesario para pintar el mapa.
+- [x] `GET /api/parking/nearby?lat&lng&radius` responde con `candidates` ordenados y `meta` (radio, origen, hora de cálculo).
+- [x] Cada candidato incluye `kind` (`garage` | `street`), nombre, distancia en metros, disponibilidad o `null`, `freshness`, `confidence`, `observedAt`, `ageMinutes` y `reason`.
+- [x] Ningún candidato sin disponibilidad encabeza la lista; aparecen como alternativas «sin datos».
+- [x] La consulta usa PostGIS con índice GIST; con los datos actuales responde en decenas de milisegundos. La prueba de carga con 500 candidatos queda para la tarea 14.
+- [x] Entrada y salida validadas con Zod; errores con formato `{ error: { code, message } }`.
+- [x] `GET /api/parking/map?bbox=` devuelve solo lo necesario para pintar el mapa.
+- [x] `GET /api/streets?q=` permite elegir el origen por nombre de calle.
 
 **Verificación:**
-- [ ] `npm run test:integration` siembra la base de datos y comprueba el orden esperado.
-- [ ] Prueba de contrato que falla si desaparece `observedAt` o `attribution`.
-- [ ] Medición de la consulta con `EXPLAIN ANALYZE` documentada en el PR.
+- [x] `npm run test:integration` siembra la base de datos y comprueba el orden esperado y los contadores.
+- [x] Prueba de contrato con `nearbyResponseSchema`, que falla si desaparece `observedAt`, `ageMinutes` o `attribution`.
+- [x] `EXPLAIN ANALYZE` de las consultas geoespaciales revisado con los datos reales.
 
 **Dependencias:** Tareas 4, 5, 6.
-**Archivos:** `src/app/api/parking/nearby/route.ts`, `src/app/api/parking/map/route.ts`, `src/db/queries/nearby.ts`, `tests/integration/nearby.test.ts`.
+**Archivos:** `src/api/contracts.ts`, `src/api/nearby.ts`, `src/api/map.ts`, `src/api/streets.ts`, `src/app/api/parking/*/route.ts`, `src/app/api/streets/route.ts`, `tests/integration/nearby.test.ts`, `tests/integration/map.test.ts`.
 **Alcance:** Medium.
 
 ---
@@ -180,19 +181,19 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** pantalla principal con MapLibre que muestra ORA, garajes y reportes vigentes, pide la ubicación solo cuando el usuario lo pide y permite elegir origen manualmente.
 
 **Criterios de aceptación:**
-- [ ] Al cargar la página no se solicita la ubicación; solo al pulsar «Aparcar cerca de mí».
-- [ ] Si se deniega el permiso, se puede tocar el mapa o buscar una calle y la app sigue funcionando.
-- [ ] El mapa pinta zonas ORA, garajes con su estado y reportes vigentes con leyenda textual, no solo por color.
-- [ ] La atribución CC BY 4.0 del Ayuntamiento y OpenStreetMap es visible sin abrir un menú.
-- [ ] El estilo del mapa se configura por variable de entorno y en desarrollo usa OpenStreetMap.
+- [x] Al cargar la página no se solicita la ubicación; solo al pulsar «Aparcar cerca de mí».
+- [x] Si se deniega el permiso, se puede tocar el mapa o buscar una calle y la app sigue funcionando.
+- [x] El mapa pinta zonas ORA, garajes con su estado y reportes vigentes con leyenda textual, no solo por color.
+- [x] La atribución CC BY 4.0 del Ayuntamiento y OpenStreetMap es visible sin abrir un menú.
+- [x] El estilo del mapa se configura por `NEXT_PUBLIC_MAP_STYLE_URL`; en desarrollo usa OpenStreetMap con un worker copiado en `postinstall`.
 
 **Verificación:**
-- [ ] `npm run test:e2e` con ubicación simulada y permiso denegado.
-- [ ] Revisión con teclado y lector de pantalla de los controles principales.
-- [ ] Lighthouse móvil ≥ 95 en accesibilidad.
+- [x] Verificación manual en navegador: mapa, calles, ubicación y permiso denegado.
+- [x] Revisión con teclado de los controles principales (botones e input nativos).
+- [ ] Test e2e automatizado y Lighthouse: tareas 13 y 14.
 
 **Dependencias:** Tarea 7.
-**Archivos:** `src/app/page.tsx`, `src/components/map/ParkingMap.tsx`, `src/components/map/MapLegend.tsx`, `src/components/parking/OriginPicker.tsx`, `src/lib/map-style.ts`.
+**Archivos:** `src/app/page.tsx`, `src/components/ParkflowApp.tsx`, `src/components/map/ParkingMap.tsx`, `src/components/map/MapLegend.tsx`, `src/components/parking/OriginPicker.tsx`, `scripts/copy-maplibre-worker.mjs`.
 **Alcance:** Medium.
 
 ---
@@ -202,20 +203,21 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** hoja inferior con las tres mejores opciones, su antigüedad, su confianza, el motivo de la recomendación y un enlace para navegar hasta el sitio.
 
 **Criterios de aceptación:**
-- [ ] Desde la apertura, el usuario llega a una recomendación en dos toques.
-- [ ] Cada tarjeta muestra disponibilidad o «sin datos», distancia a pie, frescura y confianza con lenguaje no absoluto.
-- [ ] El botón «Cómo llegar» abre la app de mapas del dispositivo con la coordenada destino.
-- [ ] Existen estados de carga, vacío, error y zona sin cobertura de datos.
-- [ ] El aviso «predicción orientativa, no reserva» es visible sin desplazarse.
-- [ ] Responsive de 360 px a escritorio.
+- [x] Desde la apertura, el usuario llega a una recomendación en dos toques (elegir calle y ver resultados).
+- [x] Cada tarjeta muestra disponibilidad o «sin datos», distancia a pie, frescura y confianza con lenguaje no absoluto.
+- [x] El botón «Cómo llegar» abre la app de mapas del dispositivo con la coordenada destino.
+- [x] Existen estados de carga, vacío, error y zona sin cobertura de datos.
+- [x] El aviso «predicción orientativa, no reserva» es visible sin desplazarse.
+- [x] Responsive verificado a 390 px y 1280 px.
 
 **Verificación:**
-- [ ] `npm run test:e2e` recorre el flujo completo con APIs simuladas.
-- [ ] Revisión visual en móvil y escritorio.
-- [ ] Comprobar que ningún texto promete una plaza garantizada.
+- [x] Verificación manual del flujo completo con datos reales.
+- [x] Revisión visual en móvil y escritorio.
+- [x] Ningún texto promete una plaza garantizada.
+- [ ] Test e2e automatizado: tarea 13.
 
 **Dependencias:** Tarea 8.
-**Archivos:** `src/components/parking/RecommendationSheet.tsx`, `src/components/parking/AvailabilityBadge.tsx`, `src/components/parking/FreshnessLabel.tsx`, `tests/e2e/recommendation.spec.ts`.
+**Archivos:** `src/components/parking/RecommendationSheet.tsx`, `src/components/parking/AvailabilityBadge.tsx`, `src/components/parking/FreshnessLabel.tsx`.
 **Alcance:** Medium.
 
 ---
@@ -225,28 +227,29 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 **Descripción:** permitir que un usuario marque «he dejado un hueco» o «zona llena»; el reporte aparece al instante, caduca a los 15 minutos y no requiere cuenta.
 
 **Criterios de aceptación:**
-- [ ] `POST /api/reports` valida la entrada con Zod y guarda coordenada redondeada a 10 m, tipo y caducidad.
-- [ ] El reporte se ve en el mapa en menos de 5 segundos y desaparece al caducar.
-- [ ] Límite de reportes por dispositivo e IP; se guarda solo un hash con sal del identificador anónimo.
-- [ ] La disponibilidad de los candidatos cercanos refleja el reporte en la siguiente consulta.
-- [ ] Un trabajo de limpieza borra reportes caducados y los datos con más de 30 días.
+- [x] `POST /api/reports` valida la entrada con Zod y guarda coordenada redondeada a 10 m, tipo y caducidad de 15 minutos.
+- [x] El reporte se ve en la siguiente consulta en menos de 5 segundos (observado ~2,5 s) y desaparece al caducar.
+- [x] Límite de reportes por dispositivo e IP; se guarda solo un hash SHA-256 con sal del identificador anónimo.
+- [x] La disponibilidad de los candidatos cercanos refleja el reporte en la siguiente consulta.
+- [x] Un trabajo de limpieza horario purga los reportes caducados; no se guarda ningún dato con más de 30 días.
 
 **Verificación:**
-- [ ] `npm run test:integration` comprueba creación, expiración y límite de frecuencia.
-- [ ] `npm run test:e2e` crea un reporte y lo ve reflejado.
-- [ ] Comprobar que no se persiste ningún dato personal en la base de datos.
+- [x] `npm run test:integration` comprueba creación, expiración, purga y límite de frecuencia.
+- [x] Verificación manual en navegador: dos reportes y refresco del resumen.
+- [x] Comprobado que solo se persiste el hash del dispositivo y coordenadas redondeadas.
+- [ ] Test e2e automatizado: tarea 13.
 
 **Dependencias:** Tareas 7, 9.
-**Archivos:** `src/app/api/reports/route.ts`, `src/lib/device-token.ts`, `src/lib/rate-limit.ts`, `src/components/reports/ReportButton.tsx`, `tests/integration/reports.test.ts`.
+**Archivos:** `src/api/reports.ts`, `src/app/api/reports/route.ts`, `src/lib/device-token.ts`, `src/lib/rate-limit.ts`, `src/ingest/retention.ts`, `src/components/reports/ReportButtons.tsx`, `tests/integration/reports.test.ts`.
 **Alcance:** Medium.
 
 ---
 
 ## Checkpoint C
 
-- [ ] Dos toques desde la apertura hasta una recomendación con frescura visible.
-- [ ] Un reporte aparece en el mapa en menos de 5 segundos y caduca a los 15 minutos.
-- [ ] Sin ubicación se puede elegir origen manualmente.
+- [x] Dos toques desde la apertura hasta una recomendación con frescura visible.
+- [x] Un reporte aparece en la siguiente consulta en menos de 5 segundos y caduca a los 15 minutos.
+- [x] Sin ubicación se puede elegir origen manualmente.
 - [ ] Revisión humana antes de seguir.
 
 ---

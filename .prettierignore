@@ -8,3 +8,4 @@ package-lock.json
 .agents
 docs
 tasks
+public/maplibre-gl-worker.mjs

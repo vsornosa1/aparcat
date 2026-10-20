@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local agent tooling
 .agents/
+
+# generated MapLibre worker
+/public/maplibre-gl-worker.mjs
