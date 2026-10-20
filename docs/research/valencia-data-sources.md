@@ -41,6 +41,7 @@ Todas las comprobaciones se hicieron con peticiones reales desde este repositori
 
 - **Metadatos:** `https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/190/query?where=1=1&outFields=*&f=geojson`
 - **Registros:** 680 cámaras con `idcamara`, `tipocamara`, `descripcio` y `url` al visualizador.
+- **Duplicados:** una cámara aparece dos veces en la capa; el ingest deduplica por `idcamara` y guarda **679 ubicaciones**.
 - **Visualizador:** `https://camaras.valencia.es/camaras/visualizador.html?id=<idcamara>`
   - El reproductor carga un stream **RTSP** (`rtsp://camaras.valencia.es/stream/<id>/1`) mediante el player propietario `lanaccess-wsm-player.js`; no hay endpoint público de snapshots.
   - La página incluye este aviso literal: «Queda prohibida la grabación, reproducción, difusión, revelación o cesión de las imágenes obtenidas desde las cámaras del CCTV para la gestión del tráfico del Ayuntamiento de Valencia en otras páginas web.»

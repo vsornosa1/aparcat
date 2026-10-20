@@ -11,6 +11,7 @@ Parkflow combina tres señales legales y complementarias:
 - **Garajes públicos:** plazas libres en vivo cuando el Ayuntamiento las publica. Si no hay dato, se muestra «sin datos», nunca «libre».
 - **Predicción de aparcamiento regulado:** ocupación estimada por el Ayuntamiento para tramos de la zona centro, etiquetada como predicción y con su hora de consulta.
 - **Reportes de la comunidad:** «he dejado un hueco» o «zona llena», anónimos y con caducidad de 15 minutos.
+- **Cámaras de tráfico:** solo su ubicación y un enlace al visor oficial. No se descargan ni se publican imágenes.
 
 Cada recomendación muestra su antigüedad y su confianza. La app no reserva ni garantiza plazas.
 

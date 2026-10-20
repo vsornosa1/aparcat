@@ -55,6 +55,17 @@ describe.skipIf(!hasDatabase)('ingesta de cámaras de tráfico', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].description).toBe('Cámara de prueba 1');
 
+    const withDuplicate = await ingestTrafficCameras({
+      now: NOW,
+      fetchCameras: async () => [...CAMERAS, { ...CAMERAS[0], description: 'Cámara duplicada' }],
+    });
+
+    expect(withDuplicate.status).toBe('success');
+    expect(withDuplicate.records).toBe(2);
+    expect(withDuplicate.details?.duplicates).toBe(1);
+  });
+
+  it('actualiza una cámara existente sin duplicarla', async () => {
     await ingestTrafficCameras({
       now: NOW,
       fetchCameras: async () =>

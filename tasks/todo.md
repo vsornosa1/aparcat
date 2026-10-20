@@ -184,6 +184,7 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 - [x] Al cargar la página no se solicita la ubicación; solo al pulsar «Aparcar cerca de mí».
 - [x] Si se deniega el permiso, se puede tocar el mapa o buscar una calle y la app sigue funcionando.
 - [x] El mapa pinta zonas ORA, garajes con su estado y reportes vigentes con leyenda textual, no solo por color.
+- [x] El mapa muestra la ubicación de las cámaras con un enlace al visor oficial; nunca descarga ni publica imágenes.
 - [x] La atribución CC BY 4.0 del Ayuntamiento y OpenStreetMap es visible sin abrir un menú.
 - [x] El estilo del mapa se configura por `NEXT_PUBLIC_MAP_STYLE_URL`; en desarrollo usa OpenStreetMap con un worker copiado en `postinstall`.
 

@@ -28,10 +28,18 @@ export async function ingestTrafficCameras(
       ? await options.fetchCameras()
       : await fetchTrafficCamerasFromValencia();
 
-    const records = await upsertTrafficCameras(sql, cameras, now);
+    const unique = dedupeById(cameras);
+    const records = await upsertTrafficCameras(sql, unique, now);
     await finishIngestRun(sql, runId, 'success', records);
 
-    return { source: TRAFFIC_CAMERAS_SOURCE, status: 'success', records };
+    return {
+      source: TRAFFIC_CAMERAS_SOURCE,
+      status: 'success',
+      records,
+      ...(cameras.length !== unique.length
+        ? { details: { duplicates: cameras.length - unique.length } }
+        : {}),
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await finishIngestRun(sql, runId, 'failed', 0, [message]).catch(() => undefined);
@@ -49,6 +57,13 @@ async function fetchTrafficCamerasFromValencia(): Promise<ValenciaTrafficCamera[
   return collection.features
     .map(trafficCameraFromFeature)
     .filter((camera): camera is ValenciaTrafficCamera => camera !== null);
+}
+
+/** La capa municipal repite algunas cámaras con varias orientaciones. */
+function dedupeById(cameras: readonly ValenciaTrafficCamera[]): ValenciaTrafficCamera[] {
+  const byId = new Map<string, ValenciaTrafficCamera>();
+  for (const camera of cameras) byId.set(camera.sourceId, camera);
+  return [...byId.values()];
 }
 
 type TrafficCameraRow = {
