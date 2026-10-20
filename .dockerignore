@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+coverage
+.env
+.env.*
+!.env.example
+docs
+tasks
+.agents
+public/maplibre-gl-worker.mjs
+map-check.png

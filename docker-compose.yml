@@ -16,5 +16,55 @@ services:
       timeout: 5s
       retries: 12
 
+  migrate:
+    build:
+      context: .
+      target: worker
+    command: npm run db:migrate
+    environment:
+      DATABASE_URL: postgres://parkflow:parkflow@db:5432/parkflow
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  web:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_MAP_STYLE_URL: ${NEXT_PUBLIC_MAP_STYLE_URL:-}
+        NEXT_PUBLIC_CONTACT_EMAIL: ${NEXT_PUBLIC_CONTACT_EMAIL:-privacidad@parkflow.example}
+    environment:
+      DATABASE_URL: postgres://parkflow:parkflow@db:5432/parkflow
+      REPORT_SALT: ${REPORT_SALT:-parkflow-dev-salt}
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/api/health > /dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  ingest:
+    build:
+      context: .
+      target: worker
+    command: npm run ingest:watch
+    environment:
+      DATABASE_URL: postgres://parkflow:parkflow@db:5432/parkflow
+      REPORT_SALT: ${REPORT_SALT:-parkflow-dev-salt}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
 volumes:
   db-data:
