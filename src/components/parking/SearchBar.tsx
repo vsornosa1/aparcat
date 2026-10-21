@@ -1,19 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { Coordinates } from '@/domain/types';
+import { formatPlaceName } from '@/lib/format';
 import { searchPlaces, type PlaceSuggestion } from '@/lib/geocoding';
+import type { LocateState } from '@/lib/use-locate';
 
 interface SearchBarProps {
   origin: Coordinates | null;
   onOrigin: (origin: Coordinates) => void;
+  location: LocateState;
 }
 
-export function SearchBar({ origin, onOrigin }: SearchBarProps) {
+type SearchStatus = 'idle' | 'searching' | 'done';
+
+export function SearchBar({ origin, onOrigin, location }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlaceSuggestion[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
+  const [status, setStatus] = useState<SearchStatus>('idle');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const listId = useId();
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -22,7 +29,10 @@ export function SearchBar({ origin, onOrigin }: SearchBarProps) {
     let cancelled = false;
     const timer = setTimeout(async () => {
       const places = await searchPlaces(trimmed, origin ?? undefined);
-      if (!cancelled) setResults(places);
+      if (cancelled) return;
+      setResults(places);
+      setActive(0);
+      setStatus('done');
     }, 350);
 
     return () => {
@@ -35,78 +45,122 @@ export function SearchBar({ origin, onOrigin }: SearchBarProps) {
     onOrigin({ latitude: place.latitude, longitude: place.longitude });
     setQuery('');
     setResults([]);
-    setMessage(null);
-  };
-
-  const locate = () => {
-    if (!('geolocation' in navigator)) {
-      setMessage('Tu navegador no permite geolocalización. Busca una calle o toca el mapa.');
-      return;
-    }
-
-    setIsLocating(true);
-    setMessage('Obteniendo tu ubicación…');
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setIsLocating(false);
-        setMessage(null);
-        onOrigin({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-      },
-      () => {
-        setIsLocating(false);
-        setMessage('No pudimos obtener tu ubicación. Busca una calle o toca el mapa.');
-      },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
-    );
+    setStatus('idle');
+    setOpen(false);
+    location.clearMessage();
   };
 
   const handleQueryChange = (value: string) => {
     setQuery(value);
-    if (value.trim().length < 2) setResults([]);
+    setOpen(true);
+    if (value.trim().length < 2) {
+      setResults([]);
+      setStatus('idle');
+    } else {
+      setStatus('searching');
+    }
   };
 
+  const showList = open && status !== 'idle';
+  const activeId = showList && results[active] ? `${listId}-${active}` : undefined;
+
+  useEffect(() => {
+    if (activeId) document.getElementById(activeId)?.scrollIntoView({ block: 'nearest' });
+  }, [activeId]);
+
+  const hint =
+    location.message ??
+    (origin
+      ? 'Punto elegido. Toca el mapa o busca otro lugar para cambiarlo.'
+      : 'Busca una dirección, toca el mapa o usa tu ubicación. Sin seguimiento.');
+
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white/97 shadow-sm backdrop-blur">
+    <div
+      className="rounded-xl border border-zinc-200 bg-white/97 shadow-sm backdrop-blur"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+    >
       <div className="flex items-center gap-2 px-3 py-2">
         <SearchIcon />
         <input
           type="search"
+          role="combobox"
           aria-label="Buscar calle o lugar"
+          aria-expanded={showList}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={activeId}
           placeholder="¿Dónde quieres aparcar?"
           value={query}
           onChange={(event) => handleQueryChange(event.target.value)}
+          onFocus={() => setOpen(true)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter' && results[0]) {
+            if (event.key === 'ArrowDown' && results.length > 0) {
               event.preventDefault();
-              choose(results[0]);
+              setOpen(true);
+              setActive((current) => (current + 1) % results.length);
+            } else if (event.key === 'ArrowUp' && results.length > 0) {
+              event.preventDefault();
+              setActive((current) => (current - 1 + results.length) % results.length);
+            } else if (event.key === 'Enter' && showList && results[active]) {
+              event.preventDefault();
+              choose(results[active]);
+            } else if (event.key === 'Escape') {
+              setOpen(false);
             }
           }}
           autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent py-1 text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none"
+          enterKeyHint="search"
+          className="min-w-0 flex-1 bg-transparent py-1 text-base text-zinc-900 placeholder:text-zinc-500 focus:outline-none sm:text-sm"
         />
         <button
           type="button"
-          onClick={locate}
-          disabled={isLocating}
+          onClick={location.locate}
+          disabled={location.isLocating}
           aria-label="Usar mi ubicación"
           title="Usar mi ubicación"
-          className="flex size-8 shrink-0 items-center justify-center rounded-full text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50"
+          className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-wait disabled:opacity-50"
         >
-          <LocateIcon />
+          <LocateIcon spinning={location.isLocating} />
         </button>
       </div>
 
-      {results.length > 0 && (
-        <ul className="max-h-60 overflow-y-auto border-t border-zinc-100">
-          {results.map((place) => (
-            <li key={place.id}>
+      {showList && (
+        <ul
+          id={listId}
+          role="listbox"
+          aria-label="Sugerencias"
+          className="max-h-60 overflow-y-auto border-t border-zinc-100"
+        >
+          {status === 'searching' && results.length === 0 && (
+            <li className="px-3 py-2 text-xs text-zinc-500">Buscando…</li>
+          )}
+          {status === 'done' && results.length === 0 && (
+            <li className="px-3 py-2 text-xs text-zinc-500">
+              Sin resultados en Valencia. Prueba con otra calle o toca el mapa.
+            </li>
+          )}
+          {results.map((place, index) => (
+            <li
+              key={place.id}
+              id={`${listId}-${index}`}
+              role="option"
+              aria-selected={index === active}
+            >
               <button
                 type="button"
+                tabIndex={-1}
+                onMouseDown={(event) => event.preventDefault()}
+                onMouseEnter={() => setActive(index)}
                 onClick={() => choose(place)}
-                className="w-full px-3 py-2 text-left hover:bg-zinc-50 focus-visible:bg-zinc-50 focus-visible:outline-none"
+                className={`w-full cursor-pointer px-3 py-2 text-left ${
+                  index === active ? 'bg-zinc-100' : ''
+                }`}
               >
-                <span className="block text-sm font-medium text-zinc-900">{place.name}</span>
+                <span className="block text-sm font-medium text-zinc-900">
+                  {formatPlaceName(place.name)}
+                </span>
                 <span className="block truncate text-xs text-zinc-500">{place.detail}</span>
               </button>
             </li>
@@ -117,12 +171,11 @@ export function SearchBar({ origin, onOrigin }: SearchBarProps) {
       <p
         role="status"
         aria-live="polite"
-        className={`px-3 pb-2 text-[11px] leading-snug text-zinc-500 ${message ? '' : 'hidden sm:block'}`}
+        className={`px-3 pb-2 text-[11px] leading-snug text-zinc-500 ${
+          location.message ? '' : 'hidden sm:block'
+        }`}
       >
-        {message ??
-          (origin
-            ? 'Origen elegido. Toca el mapa o busca otro lugar para cambiarlo.'
-            : 'Busca una dirección, una calle o usa tu ubicación. Sin seguimiento.')}
+        {hint}
       </p>
     </div>
   );
@@ -144,7 +197,7 @@ function SearchIcon() {
   );
 }
 
-function LocateIcon() {
+function LocateIcon({ spinning }: { spinning: boolean }) {
   return (
     <svg
       aria-hidden="true"
@@ -152,7 +205,7 @@ function LocateIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
-      className="size-4"
+      className={`size-4 ${spinning ? 'animate-spin' : ''}`}
     >
       <circle cx="12" cy="12" r="3" />
       <path d="M12 2v3m0 14v3M2 12h3m14 0h3" strokeLinecap="round" />

@@ -14,9 +14,9 @@ const serverEnvSchema = z.object({
   INGEST_USER_AGENT: z
     .string()
     .min(1)
-    .default('parkflow/0.1 (+https://github.com/vsornosa1/parkflow)'),
+    .default('aparcat/0.1 (+https://github.com/vsornosa1/parkflow)'),
   INGEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
-  REPORT_SALT: z.string().min(8).default('parkflow-dev-salt'),
+  REPORT_SALT: z.string().min(8).default('aparcat-dev-salt'),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

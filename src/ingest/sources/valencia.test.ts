@@ -172,7 +172,7 @@ describe('fetchValenciaLayer', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/190/query?');
     expect(url).toContain('f=geojson');
-    expect(init.headers).toMatchObject({ 'user-agent': expect.stringContaining('parkflow') });
+    expect(init.headers).toMatchObject({ 'user-agent': expect.stringContaining('aparcat') });
   });
 });
 

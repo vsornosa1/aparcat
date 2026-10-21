@@ -2,6 +2,7 @@
 
 import {
   LngLat,
+  LngLatBounds,
   Map as MapLibreMap,
   NavigationControl,
   Popup,
@@ -23,7 +24,7 @@ import type {
   OraFeatureCollection,
 } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
-import { formatFreeSpaces } from '@/lib/format';
+import { FEW_SPACES, formatFreeSpaces, formatPlaceName, PLENTY_OF_SPACES } from '@/lib/format';
 import { getMapStyle } from '@/lib/map-style';
 import { mapsUrl } from '@/lib/maps';
 import type { MapLayerVisibility } from './layers';
@@ -41,23 +42,29 @@ const SEGMENT_COLOR: ExpressionSpecification = [
   '#dc2626',
 ];
 
+// Mismos umbrales que la tarjeta: plazas absolutas, no porcentaje.
 const FACILITY_COLOR: ExpressionSpecification = [
   'case',
-  ['==', ['get', 'availability'], null],
+  ['==', ['get', 'freeSpaces'], null],
   '#a1a1aa',
-  ['>=', ['get', 'availability'], 0.6],
+  ['>=', ['get', 'freeSpaces'], PLENTY_OF_SPACES],
   '#059669',
-  ['>=', ['get', 'availability'], 0.3],
+  ['>=', ['get', 'freeSpaces'], FEW_SPACES],
   '#d97706',
   '#dc2626',
 ];
+
+// Fuera de la paleta ORA (azul, naranja, verde) para no confundirlos con zonas.
+const REPORT_FREE_COLOR = '#7c3aed';
+const REPORT_FULL_COLOR = '#be123c';
+const ORIGIN_COLOR = '#18181b';
 
 const REPORT_COLOR: ExpressionSpecification = [
   'match',
   ['get', 'kind'],
   'spot_free',
-  '#2563eb',
-  '#f97316',
+  REPORT_FREE_COLOR,
+  REPORT_FULL_COLOR,
 ];
 
 const ORA_COLOR: ExpressionSpecification = [
@@ -90,20 +97,38 @@ interface ParkingMapProps {
   ora: OraFeatureCollection | null;
   origin: Coordinates | null;
   selected: Candidate | null;
+  /** Se incrementa cuando el usuario elige una tarjeta y el mapa debe enseñarla. */
+  focusRequest: number;
   layers: MapLayerVisibility;
   onOrigin: (origin: Coordinates) => void;
+  onFacilityClick: (facilityId: string) => void;
 }
 
-export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: ParkingMapProps) {
+export function ParkingMap({
+  data,
+  ora,
+  origin,
+  selected,
+  focusRequest,
+  layers,
+  onOrigin,
+  onFacilityClick,
+}: ParkingMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const popupRef = useRef<Popup | null>(null);
   const onOriginRef = useRef(onOrigin);
+  const onFacilityClickRef = useRef(onFacilityClick);
+  const originRef = useRef(origin);
+  const selectedRef = useRef(selected);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     onOriginRef.current = onOrigin;
-  }, [onOrigin]);
+    onFacilityClickRef.current = onFacilityClick;
+    originRef.current = origin;
+    selectedRef.current = selected;
+  }, [onOrigin, onFacilityClick, origin, selected]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -128,7 +153,7 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
 
       const showPopup = (event: MapLayerMouseEvent, content: HTMLElement) => {
         popupRef.current?.remove();
-        popupRef.current = new Popup({ offset: 12, closeButton: false })
+        popupRef.current = new Popup({ offset: 12, closeButton: true, maxWidth: '260px' })
           .setLngLat(event.lngLat)
           .setDOMContent(content)
           .addTo(map);
@@ -220,8 +245,8 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
           source: 'origin',
           paint: {
             'circle-radius': 16,
-            'circle-color': '#2563eb',
-            'circle-opacity': 0.2,
+            'circle-color': ORIGIN_COLOR,
+            'circle-opacity': 0.15,
           },
         });
         map.addLayer({
@@ -230,8 +255,8 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
           source: 'origin',
           paint: {
             'circle-radius': 7,
-            'circle-color': '#2563eb',
-            'circle-stroke-width': 2,
+            'circle-color': ORIGIN_COLOR,
+            'circle-stroke-width': 3,
             'circle-stroke-color': '#ffffff',
           },
         });
@@ -241,10 +266,10 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
           type: 'circle',
           source: 'selected',
           paint: {
-            'circle-radius': 16,
+            'circle-radius': 15,
             'circle-color': 'rgba(0,0,0,0)',
             'circle-stroke-width': 3,
-            'circle-stroke-color': '#0f172a',
+            'circle-stroke-color': '#18181b',
           },
         });
 
@@ -282,10 +307,9 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
           map.on('click', layer, (event: MapLayerMouseEvent) => {
             const feature = event.features?.[0];
             if (!feature) return;
-            showPopup(
-              event,
-              facilityPopup(feature.properties as unknown as MapFacilityProperties, event.lngLat),
-            );
+            const properties = feature.properties as unknown as MapFacilityProperties;
+            onFacilityClickRef.current(String(properties.id));
+            showPopup(event, facilityPopup(properties, event.lngLat));
           });
         }
 
@@ -431,6 +455,23 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
     );
   }, [ready, selected]);
 
+  useEffect(() => {
+    if (!ready || focusRequest === 0) return;
+    const map = mapRef.current;
+    const target = selectedRef.current;
+    if (!map || !target) return;
+
+    const bounds = new LngLatBounds().extend([target.location.longitude, target.location.latitude]);
+    const start = originRef.current;
+    if (start) bounds.extend([start.longitude, start.latitude]);
+
+    map.fitBounds(bounds, {
+      padding: overlayPadding(map.getContainer()),
+      maxZoom: 16,
+      duration: 600,
+    });
+  }, [ready, focusRequest]);
+
   return (
     <div className="absolute inset-0">
       <div
@@ -445,6 +486,28 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
       </p>
     </div>
   );
+}
+
+/** Márgenes para encuadrar sin que el buscador ni la leyenda tapen los puntos. */
+function overlayPadding(container: HTMLElement) {
+  const box = container.getBoundingClientRect();
+  const section = container.closest('section');
+  const top = section?.querySelector('[data-map-overlay="top"]')?.getBoundingClientRect();
+  const legend = section?.querySelector('#map-legend')?.getBoundingClientRect();
+  const margin = 32;
+
+  const padding = {
+    top: top ? Math.max(margin, top.bottom - box.top + margin) : margin,
+    bottom: legend && legend.height > 0 ? box.bottom - legend.top + margin : margin + 24,
+    left: margin,
+    right: margin + 24,
+  };
+
+  // En pantallas bajas los márgenes no pueden comerse todo el mapa.
+  const spare = box.height - padding.top - padding.bottom;
+  if (spare < 80) padding.bottom = Math.max(margin, padding.bottom + spare - 80);
+
+  return padding;
 }
 
 function setLayerVisibility(map: MapLibreMap, layerId: string, visible: boolean): void {
@@ -517,7 +580,7 @@ function facilityPopup(
   root.className = 'space-y-1 text-sm';
 
   const title = document.createElement('strong');
-  title.textContent = properties.name;
+  title.textContent = formatPlaceName(properties.name);
 
   const type = document.createElement('p');
   type.className = 'text-xs text-zinc-500';
@@ -638,7 +701,7 @@ function mapsLink(location: Coordinates): HTMLAnchorElement {
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.className = 'inline-block text-xs font-medium text-emerald-700 underline underline-offset-2';
-  link.textContent = 'Abrir en Maps';
+  link.textContent = 'Cómo llegar ↗';
   return link;
 }
 
@@ -651,7 +714,7 @@ function cameraPopup(properties: MapCameraProperties): HTMLElement {
 
   const type = document.createElement('p');
   type.className = 'text-xs text-zinc-500';
-  type.textContent = 'Solo ubicación · sin imágenes en Parkflow';
+  type.textContent = 'Solo ubicación · sin imágenes en Aparcat';
 
   const link = document.createElement('a');
   link.href = properties.url;

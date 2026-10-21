@@ -2,6 +2,8 @@
 
 Plan completo en [plan.md](./plan.md). Cada tarea deja el repositorio en un estado que compila y pasa pruebas.
 
+> **Nota (2026-10-21):** la predicción de calles descrita en las tareas 6, 7 y 8 se retiró en la iteración [«retirada de la predicción de calles»](#iteración-2026-10-21-retirada-de-la-predicción-de-calles). Las tareas antiguas se conservan como registro de lo construido; el estado vigente es el de la última sección.
+
 Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run test:integration`, `npm run test:e2e`, `npm run db:migrate`, `npm run ingest`, `npm run probe:sources`, `docker compose up`.
 
 ---
@@ -370,3 +372,140 @@ Comandos previstos: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm run
 - **Piloto de cámaras con autorización escrita:** plan de experimento, evaluación de impacto de privacidad, anonimización de matrículas y caras, procesado en servidor y publicación solo de ocupación derivada. Se tramita en la Tarea 15.
 - **Rutinas y geofencing:** solo si se demuestra demanda y se resuelve el consumo de batería.
 - **Cola o reserva virtual:** solo con masa crítica de usuarios y acuerdos con operadores.
+
+---
+
+## Iteración 2026-10-21: retirada de la predicción de calles
+
+Spec aprobado: [simplificar-capas-mapa.md](../docs/spec/simplificar-capas-mapa.md). Objetivo: cuatro capas (Garajes, Reportes, ORA, Cámaras) y ORA solo azul, naranja y verde. Las tablas de predicción se conservan vacías.
+
+### Slice A — ORA de tres colores
+
+#### Tarea 16: Filtrar el amarillo en la API ORA
+
+**Descripción:** excluir `Amarillo` al leer las marcas, igual que ya se hace con `Blanco`, y subir la versión de caché del cliente.
+
+**Criterios de aceptación:**
+- [ ] `GET /api/parking/ora` no devuelve ninguna zona `Amarillo` ni `Blanco`.
+- [ ] La fila de caché del cliente usa `?v=6`.
+- [ ] La prueba de integración siembra una marca amarilla y comprueba que no sale.
+
+**Verificación:** `npm run test:integration` y consulta manual del endpoint contando colores.
+
+**Dependencias:** Ninguna.
+**Archivos:** `src/api/ora.ts`, `src/lib/api-client.ts`, `tests/integration/ora.test.ts`, `tests/integration/helpers/nearby-fixtures.ts`.
+**Alcance:** Small.
+
+#### Tarea 17: Quitar el amarillo del mapa y la leyenda
+
+**Descripción:** eliminar el color y los textos de la zona amarilla del mapa, del popup y de la leyenda.
+
+**Criterios de aceptación:**
+- [ ] `ParkingMap.tsx` no contiene `Amarillo` en la expresión de color ni en las etiquetas del popup.
+- [ ] La leyenda muestra solo azul, naranja y verde.
+- [ ] El resto de capas sigue igual.
+
+**Verificación:** `npm run typecheck`, `npm run lint` y revisión visual en el navegador.
+
+**Dependencias:** Tarea 16.
+**Archivos:** `src/components/map/ParkingMap.tsx`, `src/components/map/MapLegend.tsx`.
+**Alcance:** Small.
+
+### Slice B — retirada de la predicción (se implementa y verifica junta)
+
+#### Tarea 18: Limpiar contratos y dominio
+
+**Descripción:** quitar el tipo de candidato `street`, la disponibilidad de calle, la frescura de predicción y la rama de calle del ranking.
+
+**Criterios de aceptación:**
+- [ ] `Candidate.kind` solo admite `garage`.
+- [ ] No quedan `streetAvailability`, `street_prediction` ni referencias a `horizon`.
+- [ ] Las pruebas unitarias del dominio se actualizan y pasan.
+
+**Verificación:** `npm test` y `npm run typecheck` al cerrar el slice.
+
+**Dependencias:** Ninguna.
+**Archivos:** `src/api/contracts.ts`, `src/domain/types.ts`, `src/domain/availability.ts`, `src/domain/freshness.ts`, `src/domain/ranking.ts`, `src/domain/*.test.ts`.
+**Alcance:** Medium.
+
+#### Tarea 19: Limpiar APIs y búsqueda
+
+**Descripción:** quitar las consultas de tramos y predicciones de `nearby` y `map`, eliminar `includeStreets` y borrar el endpoint local de calles.
+
+**Criterios de aceptación:**
+- [ ] `nearby` devuelve solo garajes y su `meta` no incluye `streetSegments`.
+- [ ] `map` no incluye `layers.segments` ni `meta.segments`.
+- [ ] `/api/streets` responde 404 y `searchStreets` ya no existe.
+- [ ] La búsqueda usa solo MapTiler.
+
+**Verificación:** `npm run test:integration` y consulta manual de ambos endpoints.
+
+**Dependencias:** Tarea 18.
+**Archivos:** `src/api/nearby.ts`, `src/api/map.ts`, `src/app/api/parking/nearby/route.ts`, `src/lib/api-client.ts`, `src/lib/geocoding.ts`, y borrado de `src/api/streets.ts` + `src/app/api/streets/route.ts`.
+**Alcance:** Medium.
+
+#### Tarea 20: Limpiar la UI del mapa y las recomendaciones
+
+**Descripción:** dejar cuatro chips, quitar la fuente y la capa de tramos, el popup de calle y los textos de predicción.
+
+**Criterios de aceptación:**
+- [ ] Los chips son exactamente Garajes, Reportes, ORA y Cámaras.
+- [ ] El mapa no crea la fuente ni la capa `segments`.
+- [ ] Ninguna tarjeta menciona «predicción» ni «calle».
+- [ ] La leyenda no tiene la sección de predicción.
+
+**Verificación:** `npm run typecheck`, `npm run lint` y revisión visual en móvil y escritorio.
+
+**Dependencias:** Tareas 18 y 19.
+**Archivos:** `src/components/map/layers.ts`, `src/components/map/LayerControls.tsx`, `src/components/map/ParkingMap.tsx`, `src/components/map/MapLegend.tsx`, `src/components/ParkflowApp.tsx`, `src/components/parking/RecommendationSheet.tsx`, `src/components/parking/AvailabilityBadge.tsx`, `src/lib/candidates.ts`.
+**Alcance:** Medium.
+
+#### Tarea 21: Retirar la ingesta de predicciones
+
+**Descripción:** dejar solo la ingesta de marcas ORA en `segments.ts`, quitar el job y las capas de predicción del probe.
+
+**Criterios de aceptación:**
+- [ ] `npm run ingest` no descarga las capas 254/253/252/4.
+- [ ] El scheduler no ejecuta `regulated_parking`.
+- [ ] `npm run probe:sources` sigue comprobando garajes, ORA y cámaras.
+- [ ] Las tablas `parking_segments` y `occupancy_predictions` siguen existiendo, sin escrituras.
+
+**Verificación:** `npm run ingest` en Docker y `GET /api/health`.
+
+**Dependencias:** Ninguna.
+**Archivos:** `src/ingest/segments.ts`, `src/ingest/sources/valencia.ts`, `src/ingest/run.ts`, `src/ingest/scheduler.ts`, `scripts/probe-sources.ts`, `src/ingest/sources/valencia.test.ts`.
+**Alcance:** Medium.
+
+### Slice C — pruebas y documentación
+
+#### Tarea 22: Actualizar pruebas de integración y e2e
+
+**Descripción:** ajustar fixtures y casos al contrato sin calles, y añadir la comprobación de los cuatro chips.
+
+**Criterios de aceptación:**
+- [ ] Los fixtures ya no siembran tramos ni predicciones.
+- [ ] `nearby` y `map` prueban la ausencia de datos de calle.
+- [ ] El e2e comprueba los cuatro chips y el toggle de ORA.
+- [ ] `npm test`, `npm run test:integration` y `npm run test:e2e` pasan.
+
+**Verificación:** los tres comandos en verde.
+
+**Dependencias:** Tareas 18 a 21.
+**Archivos:** `tests/integration/helpers/nearby-fixtures.ts`, `tests/integration/nearby.test.ts`, `tests/integration/map.test.ts`, `tests/integration/ingest-segments.test.ts`, `tests/e2e/smoke.spec.ts`.
+**Alcance:** Medium.
+
+#### Tarea 23: Actualizar documentación y verificar Docker
+
+**Descripción:** alinear README, research, plan y tareas con el estado real y cerrar con la pila dockerizada.
+
+**Criterios de aceptación:**
+- [ ] README describe tres señales y tres colores ORA, sin predicción de calles.
+- [ ] `docs/research/valencia-data-sources.md` marca la predicción como retirada, sin borrar el histórico.
+- [ ] `tasks/plan.md` y `tasks/todo.md` reflejan esta iteración.
+- [ ] `docker compose --env-file .env.local up -d --build` queda sano y `/api/health` responde 200.
+
+**Verificación:** `npm run build`, `docker compose ps` y `/api/health`.
+
+**Dependencias:** Tareas 20 a 22.
+**Archivos:** `README.md`, `docs/research/valencia-data-sources.md`, `tasks/plan.md`, `tasks/todo.md`, `docs/spec/simplificar-capas-mapa.md`.
+**Alcance:** Small.

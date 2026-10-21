@@ -1,7 +1,14 @@
 import { useState } from 'react';
+import { FEW_SPACES, PLENTY_OF_SPACES } from '@/lib/format';
 import type { MapLayerVisibility } from './layers';
 
-const COLORS = [
+const GARAGE_COLORS = [
+  { color: 'bg-emerald-600', label: `${PLENTY_OF_SPACES}+ plazas` },
+  { color: 'bg-amber-600', label: `${FEW_SPACES}–${PLENTY_OF_SPACES - 1}` },
+  { color: 'bg-red-600', label: `menos de ${FEW_SPACES}` },
+];
+
+const STREET_COLORS = [
   { color: 'bg-emerald-600', label: 'Alta' },
   { color: 'bg-amber-500', label: 'Media' },
   { color: 'bg-red-600', label: 'Baja' },
@@ -10,8 +17,13 @@ const COLORS = [
 const ORA_COLORS = [
   { color: 'bg-blue-600', label: 'Azul · pago' },
   { color: 'bg-orange-500', label: 'Naranja · mixta' },
-  { color: 'bg-emerald-600', label: 'Verde · residentes' },
+  { color: 'bg-green-600', label: 'Verde · residentes' },
   { color: 'bg-yellow-400', label: 'Amarillo · restringido' },
+];
+
+const REPORT_COLORS = [
+  { color: 'bg-violet-600', label: 'Hueco libre' },
+  { color: 'bg-rose-700', label: 'Zona llena' },
 ];
 
 export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
@@ -21,83 +33,36 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
     <div className="pointer-events-none absolute bottom-9 left-3 z-10 flex flex-col items-start gap-1.5">
       <div
         id="map-legend"
-        className={`${open ? 'block' : 'hidden'} pointer-events-auto w-72 max-w-[calc(100vw-5rem)] rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-[11px] shadow-sm backdrop-blur lg:block`}
+        className={`${open ? 'block' : 'hidden'} pointer-events-auto max-h-[calc(46dvh-9rem)] w-64 lg:max-h-[50dvh] max-w-[calc(100vw-5rem)] space-y-1.5 overflow-y-auto rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-[11px] shadow-sm backdrop-blur lg:block`}
       >
-        <p className="font-medium text-zinc-700">Leyenda</p>
+        <p className="flex items-center gap-1.5 font-medium text-zinc-800">
+          <span
+            aria-hidden="true"
+            className="size-2.5 rounded-full bg-zinc-900 ring-2 ring-white outline outline-1 outline-zinc-300"
+          />
+          Punto elegido
+        </p>
 
-        {layers.streets && (
-          <div className="mt-1">
-            <p className="text-zinc-600">Predicción de calles</p>
-            <ul className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
-              {COLORS.map((item) => (
-                <li key={item.label} className="flex items-center gap-1.5 text-zinc-600">
-                  <span aria-hidden="true" className={`size-2 rounded-full ${item.color}`} />
-                  {item.label}
-                </li>
-              ))}
-            </ul>
-          </div>
+        {layers.garages && (
+          <LegendGroup title="Garajes públicos · plazas libres ahora" items={GARAGE_COLORS} />
         )}
-
+        {layers.reports && <LegendGroup title="Reportes (15 min)" items={REPORT_COLORS} />}
         {layers.ora && (
-          <div className="mt-1">
-            <p className="text-zinc-600">Aparcamiento en calle</p>
-            <ul className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
-              {ORA_COLORS.map((item) => (
-                <li key={item.label} className="flex items-center gap-1.5 text-zinc-600">
-                  <span aria-hidden="true" className={`size-2 rounded-full ${item.color}`} />
-                  {item.label}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <LegendGroup title="Zonas ORA · el color indica la tarifa" items={ORA_COLORS} />
+        )}
+        {layers.streets && (
+          <LegendGroup title="Calles · probabilidad de hueco (1 h)" items={STREET_COLORS} />
+        )}
+        {layers.cameras && (
+          <p className="text-zinc-600">
+            <span aria-hidden="true" className="font-semibold text-zinc-800">
+              C
+            </span>{' '}
+            cámara de tráfico (solo ubicación)
+          </p>
         )}
 
-        <p className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-zinc-600">
-          {layers.garages && (
-            <span>
-              <span aria-hidden="true" className="font-semibold text-zinc-800">
-                P
-              </span>{' '}
-              garaje (dato municipal)
-            </span>
-          )}
-          {layers.streets && (
-            <span>
-              <span aria-hidden="true" className="font-semibold text-zinc-800">
-                —
-              </span>{' '}
-              calle: predicción 1 h
-            </span>
-          )}
-          {layers.reports && (
-            <span>
-              <span aria-hidden="true" className="font-semibold text-zinc-800">
-                ●
-              </span>{' '}
-              reporte
-            </span>
-          )}
-          {layers.cameras && (
-            <span>
-              <span aria-hidden="true" className="font-semibold text-zinc-800">
-                C
-              </span>{' '}
-              cámara, sin vídeo
-            </span>
-          )}
-        </p>
-
-        <p className="mt-1 text-[10px] leading-snug text-zinc-500">
-          Garajes: plazas libres · Calles: probabilidad prevista
-        </p>
-        <p className="text-[10px] leading-snug text-zinc-500">
-          Pintura ORA: el color indica la tarifa · una calle puede tener varias
-        </p>
-        <p className="text-[10px] leading-snug text-zinc-500">Sin aforo por calle · no reserva</p>
-        <p className="text-[10px] leading-snug text-zinc-500">
-          Mapa: MapTiler · Datos: Ajuntament de València (CC BY 4.0)
-        </p>
+        <p className="text-[10px] leading-snug text-zinc-500">Orientativo · no reserva plaza</p>
       </div>
 
       <button
@@ -105,16 +70,38 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-controls="map-legend"
-        className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm backdrop-blur transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:hidden"
+        className="pointer-events-auto inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm backdrop-blur transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:hidden"
       >
         <span
           aria-hidden="true"
           className="flex size-4 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-semibold text-zinc-700"
         >
-          i
+          {open ? '×' : 'i'}
         </span>
         Leyenda
       </button>
+    </div>
+  );
+}
+
+function LegendGroup({
+  title,
+  items,
+}: {
+  title: string;
+  items: { color: string; label: string }[];
+}) {
+  return (
+    <div>
+      <p className="text-zinc-700">{title}</p>
+      <ul className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+        {items.map((item) => (
+          <li key={item.label} className="flex items-center gap-1.5 text-zinc-600">
+            <span aria-hidden="true" className={`size-2 rounded-full ${item.color}`} />
+            {item.label}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

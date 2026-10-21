@@ -12,18 +12,18 @@ jobs:
       postgres:
         image: postgis/postgis:17-3.5
         env:
-          POSTGRES_USER: parkflow
-          POSTGRES_PASSWORD: parkflow
-          POSTGRES_DB: parkflow
+          POSTGRES_USER: aparcat
+          POSTGRES_PASSWORD: aparcat
+          POSTGRES_DB: aparcat
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U parkflow -d parkflow"
+          --health-cmd "pg_isready -U aparcat -d aparcat"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
     env:
-      DATABASE_URL: postgres://parkflow:parkflow@localhost:5432/parkflow
+      DATABASE_URL: postgres://aparcat:aparcat@localhost:5432/aparcat
       REPORT_SALT: ci-salt
     steps:
       - uses: actions/checkout@v4
@@ -37,13 +37,6 @@ jobs:
       - run: npm run test:coverage
       - run: npm run test:integration
       - run: npm run build
-
-  docker:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build
 
   e2e:
     runs-on: ubuntu-latest

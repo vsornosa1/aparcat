@@ -7,11 +7,13 @@ import type { Coordinates } from '@/domain/types';
 import { fetchMapData, fetchNearby, fetchOraData, sendReport } from '@/lib/api-client';
 import { withReliableCandidates, withReliableMapFacilities } from '@/lib/candidates';
 import { hasBasemap } from '@/lib/map-style';
+import { useLocate } from '@/lib/use-locate';
 import { LayerControls } from './map/LayerControls';
 import { MapLegend } from './map/MapLegend';
 import { DEFAULT_LAYERS, type MapLayerVisibility } from './map/layers';
 import { SearchBar } from './parking/SearchBar';
 import { RecommendationSheet } from './parking/RecommendationSheet';
+import type { ReportFeedback } from './reports/ReportButtons';
 
 const ParkingMap = dynamic(() => import('./map/ParkingMap').then((module) => module.ParkingMap), {
   ssr: false,
@@ -22,7 +24,10 @@ const ParkingMap = dynamic(() => import('./map/ParkingMap').then((module) => mod
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
-export function ParkflowApp() {
+/** Los garajes publican cada pocos minutos; refrescar más a menudo no aporta. */
+const REFRESH_MS = 60_000;
+
+export function AparcatApp() {
   const [origin, setOrigin] = useState<Coordinates | null>(null);
   const [mapData, setMapData] = useState<MapResponse | null>(null);
   const [oraData, setOraData] = useState<OraFeatureCollection | null>(null);
@@ -30,7 +35,8 @@ export function ParkflowApp() {
   const [state, setState] = useState<LoadState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [reportMessage, setReportMessage] = useState<string | null>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const [report, setReport] = useState<ReportFeedback | null>(null);
   const [isReporting, setIsReporting] = useState(false);
   const [layers, setLayers] = useState<MapLayerVisibility>(DEFAULT_LAYERS);
   const requestId = useRef(0);
@@ -61,35 +67,43 @@ export function ParkflowApp() {
       });
   }, [layers.ora]);
 
-  const loadNearby = useCallback(async (coordinates: Coordinates, includeStreets: boolean) => {
-    const currentRequest = ++requestId.current;
-    setState('loading');
-    setError(null);
-    setSelectedId(null);
+  const loadNearby = useCallback(
+    async (coordinates: Coordinates, includeStreets: boolean, options?: { silent?: boolean }) => {
+      const silent = options?.silent ?? false;
+      const currentRequest = ++requestId.current;
+      if (!silent) {
+        setState('loading');
+        setError(null);
+        setSelectedId(null);
+      }
 
-    try {
-      const data = withReliableCandidates(
-        await fetchNearby(coordinates.latitude, coordinates.longitude, { includeStreets }),
-      );
-      if (currentRequest !== requestId.current) return;
+      try {
+        const data = withReliableCandidates(
+          await fetchNearby(coordinates.latitude, coordinates.longitude, { includeStreets }),
+        );
+        if (currentRequest !== requestId.current) return;
 
-      setNearby(data);
-      setSelectedId((current) =>
-        data.candidates.some((candidate) => candidate.id === current)
-          ? current
-          : (data.candidates[0]?.id ?? null),
-      );
-      setState('ready');
-    } catch (caught) {
-      if (currentRequest !== requestId.current) return;
+        setNearby(data);
+        setSelectedId((current) =>
+          data.candidates.some((candidate) => candidate.id === current)
+            ? current
+            : (data.candidates[0]?.id ?? null),
+        );
+        setState('ready');
+      } catch (caught) {
+        if (currentRequest !== requestId.current) return;
+        // Un refresco en segundo plano fallido no borra lo que ya se ve.
+        if (silent) return;
 
-      setNearby(null);
-      setError(
-        caught instanceof Error ? caught.message : 'No se pudieron cargar las recomendaciones',
-      );
-      setState('error');
-    }
-  }, []);
+        setNearby(null);
+        setError(
+          caught instanceof Error ? caught.message : 'No se pudieron cargar las recomendaciones',
+        );
+        setState('error');
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!origin) return;
@@ -98,13 +112,29 @@ export function ParkflowApp() {
     return () => clearTimeout(timer);
   }, [origin, layers.streets, loadNearby]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      void loadMap();
+      if (origin) void loadNearby(origin, layers.streets, { silent: true });
+    }, REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [origin, layers.streets, loadMap, loadNearby]);
+
   const handleOrigin = useCallback((coordinates: Coordinates) => {
     setOrigin(coordinates);
-    setReportMessage(null);
+    setReport(null);
   }, []);
+
+  const location = useLocate(handleOrigin);
 
   const toggleLayer = useCallback((layer: keyof MapLayerVisibility) => {
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
+  }, []);
+
+  const handleSelect = useCallback((id: string) => {
+    setSelectedId(id);
+    setFocusRequest((current) => current + 1);
   }, []);
 
   const handleReport = useCallback(
@@ -112,18 +142,23 @@ export function ParkflowApp() {
       if (!origin) return;
 
       setIsReporting(true);
-      setReportMessage(null);
+      setReport(null);
 
       try {
         await sendReport({ kind, latitude: origin.latitude, longitude: origin.longitude });
-        setReportMessage(
-          kind === 'spot_free'
-            ? 'Hueco reportado. Gracias por avisar.'
-            : 'Zona marcada como llena. Gracias por avisar.',
-        );
-        await Promise.all([loadMap(), loadNearby(origin, layers.streets)]);
+        setReport({
+          tone: 'success',
+          text:
+            kind === 'spot_free'
+              ? 'Hueco reportado. Gracias por avisar.'
+              : 'Zona marcada como llena. Gracias por avisar.',
+        });
+        await Promise.all([loadMap(), loadNearby(origin, layers.streets, { silent: true })]);
       } catch (caught) {
-        setReportMessage(caught instanceof Error ? caught.message : 'No se pudo enviar el reporte');
+        setReport({
+          tone: 'error',
+          text: caught instanceof Error ? caught.message : 'No se pudo enviar el reporte',
+        });
       } finally {
         setIsReporting(false);
       }
@@ -131,9 +166,18 @@ export function ParkflowApp() {
     [origin, layers.streets, loadMap, loadNearby],
   );
 
+  const candidates = nearby?.candidates;
   const selected = useMemo(
-    () => nearby?.candidates.find((candidate) => candidate.id === selectedId) ?? null,
-    [nearby, selectedId],
+    () => candidates?.find((candidate) => candidate.id === selectedId) ?? null,
+    [candidates, selectedId],
+  );
+
+  const handleFacilityClick = useCallback(
+    (facilityId: string) => {
+      const id = `garage:${facilityId}`;
+      if (candidates?.some((candidate) => candidate.id === id)) setSelectedId(id);
+    },
+    [candidates],
   );
 
   return (
@@ -147,12 +191,17 @@ export function ParkflowApp() {
           ora={oraData}
           origin={origin}
           selected={selected}
+          focusRequest={focusRequest}
           layers={layers}
           onOrigin={handleOrigin}
+          onFacilityClick={handleFacilityClick}
         />
 
-        <div className="absolute inset-x-3 top-3 z-10 flex flex-col gap-2 sm:w-96">
-          <SearchBar origin={origin} onOrigin={handleOrigin} />
+        <div
+          data-map-overlay="top"
+          className="absolute inset-x-3 top-3 z-10 flex flex-col gap-2 sm:right-auto sm:w-[27.5rem]"
+        >
+          <SearchBar origin={origin} onOrigin={handleOrigin} location={location} />
           <LayerControls layers={layers} onToggle={toggleLayer} />
           {!hasBasemap && (
             <p
@@ -177,13 +226,15 @@ export function ParkflowApp() {
           error={error}
           selectedId={selectedId}
           streetsEnabled={layers.streets}
-          onSelect={setSelectedId}
+          onSelect={handleSelect}
           onRetry={() => {
             if (origin) void loadNearby(origin, layers.streets);
           }}
+          onLocate={location.locate}
+          isLocating={location.isLocating}
           onReport={handleReport}
           isReporting={isReporting}
-          reportMessage={reportMessage}
+          report={report}
         />
       </aside>
     </main>

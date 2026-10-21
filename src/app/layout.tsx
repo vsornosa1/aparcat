@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Parkflow Valencia',
+  title: 'Aparcat Valencia',
   description:
     'Encuentra aparcamiento libre cerca de ti en Valencia con datos abiertos del Ayuntamiento y reportes de la comunidad.',
 };

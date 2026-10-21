@@ -3,15 +3,15 @@ import Link from 'next/link';
 import { contactEmail } from '@/lib/legal';
 
 export const metadata: Metadata = {
-  title: 'Privacidad · Parkflow',
-  description: 'Cómo trata Parkflow la ubicación y los reportes de la comunidad.',
+  title: 'Privacidad · Aparcat',
+  description: 'Cómo trata Aparcat la ubicación y los reportes de la comunidad.',
 };
 
 export default function PrivacidadPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-6 py-12 text-sm leading-relaxed text-zinc-700">
       <Link href="/" className="text-emerald-700 hover:text-emerald-800">
-        ← Volver a Parkflow
+        ← Volver a Aparcat
       </Link>
 
       <header className="flex flex-col gap-1">
@@ -22,7 +22,7 @@ export default function PrivacidadPage() {
       <section className="space-y-2">
         <h2 className="text-base font-semibold text-zinc-900">Sin cuentas ni publicidad</h2>
         <p>
-          Parkflow no requiere registro, no usa cookies de publicidad ni elabora perfiles de
+          Aparcat no requiere registro, no usa cookies de publicidad ni elabora perfiles de
           usuarios. No vendemos ni cedemos datos personales.
         </p>
       </section>
@@ -56,7 +56,7 @@ export default function PrivacidadPage() {
           El mapa usa MapLibre con MapTiler y datos de OpenStreetMap, que reciben la petición de tu
           navegador con la información técnica habitual. Los datos de aparcamiento proceden del
           Ajuntament de València y se publican con licencia CC BY 4.0. Las cámaras de tráfico solo
-          se muestran como ubicación con un enlace al visor oficial: Parkflow no descarga ni publica
+          se muestran como ubicación con un enlace al visor oficial: Aparcat no descarga ni publica
           sus imágenes.
         </p>
       </section>

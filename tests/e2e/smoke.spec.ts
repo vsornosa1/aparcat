@@ -130,7 +130,7 @@ async function mockApis(page: Page): Promise<void> {
 
 async function choosePlace(page: Page): Promise<void> {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Parkflow' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Aparcat' })).toBeVisible();
   await page.getByLabel('Buscar calle o lugar').fill('Carrer de la Prova');
   await page.getByRole('button', { name: /Carrer de la Prova/ }).click();
   await expect(page.getByRole('heading', { name: 'Garaje de prueba' })).toBeVisible();
@@ -145,7 +145,7 @@ test('la búsqueda muestra un garaje por defecto', async ({ page }) => {
 
   await expect(page.getByText('80 plazas libres', { exact: true })).toBeVisible();
   await expect(page.getByText('En vivo · ahora')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Abrir en Maps' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Cómo llegar' })).toBeVisible();
   await expect(page.getByText('Predicción orientativa')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Ajuntament de València' })).toBeVisible();
 });
@@ -154,7 +154,7 @@ test('en móvil la leyenda no tapa el mapa hasta abrirla', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await choosePlace(page);
 
-  const legend = page.getByText(/Garajes: plazas libres/);
+  const legend = page.getByText(/Orientativo · no reserva plaza/);
   await expect(page.getByText('80 plazas libres', { exact: true })).toBeVisible();
   await expect(legend).toBeHidden();
 

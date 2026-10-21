@@ -28,7 +28,7 @@ Pedimos una de estas tres cosas, por orden de preferencia:
 
 ## Borrador de solicitud
 
-> **Asunto:** Solicitud de autorización para el uso limitado de imágenes de cámaras municipales de tráfico con fines de información de aparcamiento (proyecto Parkflow)
+> **Asunto:** Solicitud de autorización para el uso limitado de imágenes de cámaras municipales de tráfico con fines de información de aparcamiento (proyecto Aparcat)
 >
 > **Destinatario:** Servei de Mobilitat de l'Ajuntament de València
 >
@@ -36,7 +36,7 @@ Pedimos una de estas tres cosas, por orden de preferencia:
 >
 > Me dirijo a ustedes en relación con las cámaras de gestión de tráfico del Centre de Gestió de Trànsit, cuyos metadatos se publican en el portal de datos abiertos municipal (capa 190 del servicio `OPENDATA/Trafico/MapServer`).
 >
-> Soy [nombre], responsable del proyecto **Parkflow**, una aplicación web sin ánimo de lucro, de código abierto y sin publicidad, cuyo único objetivo es ayudar a los conductores a encontrar aparcamiento disponible en la ciudad y reducir así el tráfico de búsqueda y las emisiones asociadas. El código del proyecto es público en [repositorio].
+> Soy [nombre], responsable del proyecto **Aparcat**, una aplicación web sin ánimo de lucro, de código abierto y sin publicidad, cuyo único objetivo es ayudar a los conductores a encontrar aparcamiento disponible en la ciudad y reducir así el tráfico de búsqueda y las emisiones asociadas. El código del proyecto es público en [repositorio].
 >
 > **Solicito** autorización para utilizar, con carácter exclusivamente experimental y durante un máximo de tres meses, las imágenes de un conjunto limitado de cámaras de tráfico (anexo A), con el único fin de estimar la ocupación de plazas de aparcamiento en la vía pública.
 >
@@ -50,7 +50,7 @@ Pedimos una de estas tres cosas, por orden de preferencia:
 > 6. El tratamiento se realizará en servidores ubicados en la Unión Europea, con cifrado en tránsito y en reposo, control de acceso y registro de operaciones.
 > 7. Me comprometo a elaborar y presentar una **evaluación de impacto relativa a la protección de datos** y a firmar cualquier encargo de tratamiento o convenio que el Ayuntamiento considere necesario.
 >
-> **Alternativa solicitada:** si la cesión de imágenes no fuera posible, agradecería que valoraran publicar como dato abierto la ocupación agregada de aparcamiento que ya pudieran calcular con sus propios sistemas de análisis de vídeo. En ese caso, Parkflow consumiría esa API sin acceder a ninguna imagen.
+> **Alternativa solicitada:** si la cesión de imágenes no fuera posible, agradecería que valoraran publicar como dato abierto la ocupación agregada de aparcamiento que ya pudieran calcular con sus propios sistemas de análisis de vídeo. En ese caso, Aparcat consumiría esa API sin acceder a ninguna imagen.
 >
 > Agradecería que, si lo consideran oportuno, nos indiquen el área o servicio competente y la documentación adicional que debamos aportar.
 >

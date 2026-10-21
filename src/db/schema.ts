@@ -1,5 +1,5 @@
 /**
- * Tipos y consultas de las tablas de Parkflow.
+ * Tipos y consultas de las tablas de Aparcat.
  *
  * El DDL, las restricciones y los índices viven en `src/db/migrations`, que es la
  * única fuente de verdad del esquema. Aquí solo se declara su forma para el ORM.

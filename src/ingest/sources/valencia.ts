@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { serverEnv } from '@/lib/env';
 
-/** Capas del MapServer municipal que usa Parkflow. */
+/** Capas del MapServer municipal que usa Aparcat. */
 export const VALENCIA_LAYERS = {
   parkingFacilities: 194,
   regulatedParkingPredictions1h: 254,

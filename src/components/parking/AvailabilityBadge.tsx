@@ -1,5 +1,5 @@
 import type { Candidate } from '@/api/contracts';
-import { formatFreeSpaces } from '@/lib/format';
+import { formatFreeSpaces, spacesTone } from '@/lib/format';
 import { isNil } from '@/lib/nil';
 
 const TONES = {
@@ -22,13 +22,8 @@ export function AvailabilityBadge({ candidate }: { candidate: Candidate }) {
   const stale = candidate.freshness === 'stale';
 
   if (candidate.kind === 'garage') {
-    const freeSpaces = candidate.freeSpaces;
-    const ratio =
-      !isNil(freeSpaces) && candidate.capacity
-        ? freeSpaces / candidate.capacity
-        : candidate.availability;
-    const tone = stale ? 'unknown' : toneFor(ratio);
-    const label = `${formatFreeSpaces(freeSpaces)}${stale ? ' · antiguo' : ''}`;
+    const tone = stale ? 'unknown' : spacesTone(candidate.freeSpaces);
+    const label = `${formatFreeSpaces(candidate.freeSpaces)}${stale ? ' · antiguo' : ''}`;
 
     return <Badge tone={tone} label={label} />;
   }

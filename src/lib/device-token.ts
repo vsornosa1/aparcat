@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'parkflow.device-id';
+const STORAGE_KEY = 'aparcat.device-id';
 
 /** Identificador anónimo del navegador para limitar reportes. No contiene datos personales. */
 export function getDeviceId(): string {

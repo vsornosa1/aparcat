@@ -2,7 +2,7 @@
 
 ## Resumen
 
-Webapp pública que responde «¿dónde aparco ahora?» en Valencia. Combina tres señales legales y verificadas: disponibilidad en vivo de los aparcamientos públicos municipales, predicción municipal de ocupación del aparcamiento regulado en la zona centro y reportes anónimos de la comunidad con caducidad de 15 minutos. La interfaz muestra siempre la frescura y la confianza de cada dato y nunca promete una plaza.
+Webapp pública que responde «¿dónde aparco ahora?» en Valencia. Combina tres señales legales y verificadas: disponibilidad en vivo de los aparcamientos públicos municipales, zonas de aparcamiento regulado (ORA) en la calle y reportes anónimos de la comunidad con caducidad de 15 minutos. La interfaz muestra siempre la frescura y la confianza de cada dato y nunca promete una plaza.
 
 El contexto de producto está en [valencia-parking.md](../docs/intent/valencia-parking.md) y las fuentes verificadas en [valencia-data-sources.md](../docs/research/valencia-data-sources.md).
 
@@ -41,8 +41,8 @@ tasks/                 # este plan y la lista de tareas
 ## Fuentes de datos y contrato con la realidad
 
 1. **Garajes públicos (capa 194).** 23 aparcamientos; solo 7 tienen dato fresco, 3 están obsoletos y 13 no tienen dato. La app los representa como `live`, `stale` o `unknown`, y jamás como libres cuando no hay dato. La ocupación se deriva de `plazaslibr / plazastota` porque el campo `ocupacion` está mal etiquetado.
-2. **Predicción ORA (capas 254/253/252/4).** 257 tramos en la zona centro con cuatro horizontes. Se etiqueta como «predicción municipal» con la hora en que la consultamos; no es un sensor en vivo.
-3. **Inventario ORA (capa 205).** 33.503 líneas de pintura regulada para dar contexto visual.
+2. **Predicción ORA (capas 254/253/252/4) — retirada.** Se usó durante el MVP para 257 tramos del centro con cuatro horizontes. Se retiró porque solo cubría el centro, se solapaba con las zonas ORA y no aportaba plazas reales. Las tablas `parking_segments` y `occupancy_predictions` se conservan vacías y sin escrituras.
+3. **Inventario ORA (capa 205).** 33.503 líneas de pintura regulada. La app las agrupa en zonas y muestra azul (pago), naranja (mixta) y verde (residentes); blanco y amarillo se filtran al leer.
 4. **Reportes de la comunidad.** Señal anónima, caduca a los 15 minutos, con límite de frecuencia por dispositivo.
 5. **Cámaras (capa 190).** Solo se usan sus metadatos como inventario futuro. Las imágenes están prohibidas para difusión pública, así que no se descargan ni se procesan en el MVP.
 
@@ -52,7 +52,6 @@ tasks/                 # este plan y la lista de tareas
 
 ```
 garaje:   availability = plazaslibr / plazastota        (null si plazaslibr < 0 o plazastota <= 0)
-calle:    availability = 1 - ocupacionPct / 100         (acotado a [0, 1])
 reporte:  señal cualitativa, no un porcentaje
 ```
 
@@ -61,7 +60,6 @@ reporte:  señal cualitativa, no un porcentaje
 | Señal | Fresca | Aceptable | Obsoleta |
 |---|---|---|---|
 | Garaje (hora del dato) | ≤ 5 min | ≤ 20 min | > 20 min |
-| Predicción ORA (hora de consulta) | ≤ 60 min | ≤ 6 h | > 6 h |
 | Reporte | ≤ 5 min | ≤ 15 min | caducado |
 
 Cada candidato expone `observedAt`, `ageMinutes`, `freshness` (`live`, `recent`, `stale`, `unknown`) y `confidence` (`high`, `medium`, `low`).
@@ -77,18 +75,18 @@ score = 0.45 * availability
 
 - `proximity = exp(-distanciaMetros / 800)`: caminar 800 m penaliza de forma natural.
 - `reportSignal ∈ [-1, 1]`: positivo si alguien acaba de dejar un hueco, negativo si reporta zona llena, decae linealmente hasta caducar.
-- Los candidatos sin disponibilidad conocida no pueden encabezar la lista; se muestran como alternativas «sin datos» con `confidence = low`.
+- Los candidatos con confianza baja o sin plazas conocidas se descartan: la lista solo muestra garajes con dato fiable.
 - Toda constante vive en `src/domain/ranking.ts` con pruebas de frontera. La respuesta de la API incluye el desglose para poder explicar la recomendación.
 
 ## Contrato de API
 
 | Método y ruta | Propósito | Notas |
 |---|---|---|
-| `GET /api/parking/nearby?lat&lng&radius&at` | Recomendaciones ordenadas | Respuesta validada con Zod; `Cache-Control: public, s-maxage=30, stale-while-revalidate=60` |
-| `GET /api/parking/map?bbox=` | Zonas ORA, garajes y reportes vigentes | Sirve para pintar el mapa sin descargar todo |
-| `POST /api/reports` | Crear reporte anónimo | `{ kind: 'spot_free' \| 'area_full', lat, lng, segmentId? }`; límite por dispositivo e IP |
+| `GET /api/parking/nearby?lat&lng&radius` | Recomendaciones ordenadas de garajes | Respuesta validada con Zod; `Cache-Control: public, s-maxage=30, stale-while-revalidate=60` |
+| `GET /api/parking/map?bbox=` | Garajes, reportes y cámaras vigentes | Sirve para pintar el mapa sin descargar todo |
+| `GET /api/parking/ora?bbox=` | Zonas ORA agrupadas | Azul, naranja y verde; excluye blanco y amarillo |
+| `POST /api/reports` | Crear reporte anónimo | `{ kind: 'spot_free' \| 'area_full', lat, lng }`; límite por dispositivo e IP |
 | `GET /api/health` | Estado y última ingesta | Devuelve estado de la base de datos y de cada fuente |
-| `GET /api/streets?q=` | Búsqueda de calle para elegir origen manual | Se resuelve contra los tramos ya cargados; sin geocoder externo |
 
 Reglas comunes: coordenadas redondeadas a 10 m, sin identificadores personales, errores en formato `{ error: { code, message } }` y nunca se devuelve un dato sin su `observedAt`.
 
@@ -167,18 +165,30 @@ Detalle completo, criterios de aceptación y verificación en [todo.md](./todo.m
 
 - [ ] Tarea 15: Solicitar y hacer seguimiento de la autorización de cámaras
 
+## Iteración actual (2026-10-21): retirada de la predicción de calles
+
+Spec: [docs/spec/simplificar-capas-mapa.md](../docs/spec/simplificar-capas-mapa.md). Decisiones aprobadas por el usuario:
+
+- Se elimina la feature «Calles» **con toda su lógica**: contrato, consultas, ranking, UI, endpoint `/api/streets`, ingesta y probe.
+- Las tablas `parking_segments` y `occupancy_predictions` **se conservan vacías**, sin migración destructiva.
+- MapTiler se mantiene como geocodificador y proveedor de mapa.
+- ORA se queda en azul, naranja y verde; blanco y amarillo se filtran al leer.
+- Garajes, reportes y cámaras no cambian.
+
+El mapa y las recomendaciones quedan con cuatro capas: Garajes, Reportes, ORA y Cámaras.
+
 ## Riesgos y mitigaciones
 
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
 | Las imágenes de cámaras están prohibidas para difusión | Alto | Fuera del MVP; solicitud de autorización en paralelo ([camera-authorization-request.md](../docs/legal/camera-authorization-request.md)); si se autoriza, procesado en servidor y sin publicar imágenes |
-| Solo 7 de 23 garajes tienen dato fresco | Medio | Mostrar `unknown` sin disimular; la predicción ORA y los reportes cubren el resto |
-| La predicción ORA cubre solo la zona centro | Medio | Etiquetar cobertura por zona; no extrapolar; los reportes funcionan en cualquier punto |
+| Solo 7 de 23 garajes tienen dato fresco | Medio | Mostrar `unknown` sin disimular; los reportes y las zonas ORA cubren el resto |
+| La predicción de calles cubría solo la zona centro | Resuelto | Se retiró la señal; las zonas ORA dan cobertura de tarifa en toda la ciudad |
 | Cambios de esquema en los endpoints municipales | Alto | Validación Zod, `ingest_runs`, probe que falla ante deriva y sin borrado ante error |
 | Sin SLA del Ayuntamiento | Medio | Caché en servidor, degradación elegante y última copia buena en base de datos |
 | Reportes falsos o abusivos | Medio | Caducidad de 15 min, límite por dispositivo e IP, sin cuentas y sin ranking permanente |
 | Coste o condiciones del proveedor de tiles | Medio | Estilo configurable por entorno; OpenStreetMap solo en desarrollo |
-| Escasez de usuarios al principio | Medio | El valor principal no depende de la comunidad: garajes y predicciones funcionan solos |
+| Escasez de usuarios al principio | Medio | El valor principal no depende de la comunidad: garajes y zonas ORA funcionan solos |
 | PostGIS en despliegue serverless | Bajo | Documentar Vercel + Neon con conexión pooled; Docker Compose como camino principal |
 
 ## Preguntas abiertas

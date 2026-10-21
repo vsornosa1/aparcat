@@ -26,7 +26,7 @@ export function FreshnessLabel({
   const tone = TONES[freshness] ?? TONES.unknown;
 
   return (
-    <span className={`text-xs ${tone}`}>
+    <span className={tone}>
       {label}
       {formatAge(ageMinutes)}
     </span>

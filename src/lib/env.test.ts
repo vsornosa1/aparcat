@@ -25,7 +25,7 @@ describe('serverEnv', () => {
     expect(env.LOG_LEVEL).toBe('info');
     expect(env.VALENCIA_TRAFFIC_BASE_URL).toContain('geoportal.valencia.es');
     expect(env.INGEST_TIMEOUT_MS).toBe(15_000);
-    expect(env.INGEST_USER_AGENT).toContain('parkflow');
+    expect(env.INGEST_USER_AGENT).toContain('aparcat');
   });
 
   it('falla con un mensaje claro cuando un valor no es válido', () => {
@@ -50,8 +50,8 @@ describe('databaseUrl', () => {
   });
 
   it('devuelve la cadena de conexión configurada', () => {
-    process.env.DATABASE_URL = 'postgres://parkflow:parkflow@localhost:5432/parkflow';
+    process.env.DATABASE_URL = 'postgres://aparcat:aparcat@localhost:5432/aparcat';
 
-    expect(databaseUrl()).toBe('postgres://parkflow:parkflow@localhost:5432/parkflow');
+    expect(databaseUrl()).toBe('postgres://aparcat:aparcat@localhost:5432/aparcat');
   });
 });

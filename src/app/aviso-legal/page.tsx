@@ -3,15 +3,15 @@ import Link from 'next/link';
 import { contactEmail } from '@/lib/legal';
 
 export const metadata: Metadata = {
-  title: 'Aviso legal · Parkflow',
-  description: 'Condiciones de uso y atribución de datos de Parkflow Valencia.',
+  title: 'Aviso legal · Aparcat',
+  description: 'Condiciones de uso y atribución de datos de Aparcat Valencia.',
 };
 
 export default function AvisoLegalPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-6 py-12 text-sm leading-relaxed text-zinc-700">
       <Link href="/" className="text-emerald-700 hover:text-emerald-800">
-        ← Volver a Parkflow
+        ← Volver a Aparcat
       </Link>
 
       <header className="flex flex-col gap-1">
@@ -22,7 +22,7 @@ export default function AvisoLegalPage() {
       <section className="space-y-2">
         <h2 className="text-base font-semibold text-zinc-900">Titular</h2>
         <p>
-          Parkflow es un proyecto abierto e independiente. Para cualquier comunicación, escribe a{' '}
+          Aparcat es un proyecto abierto e independiente. Para cualquier comunicación, escribe a{' '}
           <a className="underline underline-offset-2" href={`mailto:${contactEmail}`}>
             {contactEmail}
           </a>
@@ -33,7 +33,7 @@ export default function AvisoLegalPage() {
       <section className="space-y-2">
         <h2 className="text-base font-semibold text-zinc-900">Sin afiliación municipal</h2>
         <p>
-          Parkflow no está afiliado ni patrocinado por el Ajuntament de València. Las señales de
+          Aparcat no está afiliado ni patrocinado por el Ajuntament de València. Las señales de
           tráfico, las normas de estacionamiento y las indicaciones de los agentes prevalecen sobre
           cualquier recomendación de la aplicación.
         </p>
@@ -63,7 +63,7 @@ export default function AvisoLegalPage() {
       <section className="space-y-2">
         <h2 className="text-base font-semibold text-zinc-900">Sin garantías</h2>
         <p>
-          Las disponibilidades son estimaciones y pueden estar desactualizadas. Parkflow no reserva
+          Las disponibilidades son estimaciones y pueden estar desactualizadas. Aparcat no reserva
           ni garantiza plazas de aparcamiento y no se responsabiliza de las decisiones de
           estacionamiento ni de las sanciones que pudieran derivarse.
         </p>

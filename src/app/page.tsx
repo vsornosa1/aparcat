@@ -1,5 +1,5 @@
-import { ParkflowApp } from '@/components/ParkflowApp';
+import { AparcatApp } from '@/components/AparcatApp';
 
 export default function Home() {
-  return <ParkflowApp />;
+  return <AparcatApp />;
 }

@@ -1,12 +1,12 @@
-# Parkflow Valencia
+# Aparcat
 
 Webapp para encontrar aparcamiento libre cerca de ti en Valencia sin dar vueltas.
 
-> **Estado:** MVP completo y dockerizado. El mapa, las recomendaciones, las cámaras (solo ubicación) y los reportes funcionan con datos reales. La CI está configurada y pendiente de ejecutarse en GitHub.
+> **Estado:** MVP completo. El mapa, las recomendaciones, las cámaras (solo ubicación) y los reportes funcionan con datos reales. La CI está configurada y pendiente de ejecutarse en GitHub.
 
 ## Cómo funciona
 
-Parkflow combina varias señales legales y complementarias. El mapa arranca con garajes, reportes y zonas ORA; la predicción de calles y las cámaras se activan desde «Capas del mapa»:
+Aparcat combina varias señales legales y complementarias. El mapa arranca con garajes, reportes y zonas ORA; la predicción de calles y las cámaras se activan desde «Capas del mapa»:
 
 - **Garajes públicos:** plazas libres cuando el Ayuntamiento las publica. Si el dato es antiguo o no existe, se muestra «antiguo» o «sin datos», nunca «libre».
 - **Reportes de la comunidad:** «he dejado un hueco» o «zona llena», anónimos y con caducidad de 15 minutos.
@@ -26,31 +26,20 @@ Los endpoints, campos, licencias y limitaciones están verificados en [docs/rese
 
 ## Stack
 
-Next.js 16 · TypeScript estricto · Tailwind CSS · PostgreSQL + PostGIS · Drizzle ORM · Vitest · Docker Compose.
+Next.js 16 · TypeScript estricto · Tailwind CSS · PostgreSQL + PostGIS · Drizzle ORM · Vitest.
 
 ## Puesta en marcha
 
-Requisitos: Node.js 22+ y Docker.
+Requisitos: Node.js 22+ y una base PostgreSQL con PostGIS (local, Neon, Supabase...).
 
 ```bash
 npm install
-cp .env.example .env.local
-docker compose up -d db
+cp .env.example .env.local   # ajusta DATABASE_URL
 npm run db:migrate
 npm run dev
 ```
 
-Abre <http://localhost:3000>. La base de datos escucha en el puerto **5434** para no chocar con otros PostgreSQL de la máquina.
-
-### Todo con Docker
-
-```bash
-docker compose up -d --build
-```
-
-Levanta PostGIS, aplica migraciones y arranca web e ingesta con healthchecks. Comprueba el estado en `http://localhost:3000/api/health`. Guía completa en [docs/deploy.md](docs/deploy.md).
-
-Si tienes la key de MapTiler en `.env.local`, `docker compose` no la lee por defecto: arranca con `docker compose --env-file .env.local up -d --build` o exporta `NEXT_PUBLIC_MAPTILER_KEY` antes del build. Sin key, el mapa usa el fondo neutro y las capas de datos siguen funcionando.
+Abre <http://localhost:3000>. Sin key de MapTiler en `.env.local`, el mapa usa el fondo neutro y las capas de datos siguen funcionando. Guía de despliegue en [docs/deploy.md](docs/deploy.md).
 
 ## Scripts
 
@@ -61,7 +50,7 @@ Si tienes la key de MapTiler en `.env.local`, `docker compose` no la lee por def
 | `npm run lint`             | ESLint                                                                           |
 | `npm run typecheck`        | TypeScript sin emitir                                                            |
 | `npm test`                 | Pruebas unitarias                                                                |
-| `npm run test:integration` | Pruebas contra PostgreSQL (requiere Docker y migraciones)                        |
+| `npm run test:integration` | Pruebas contra PostgreSQL (requiere PostgreSQL con PostGIS y migraciones)                        |
 | `npm run test:coverage`    | Cobertura con umbrales                                                           |
 | `npm run test:e2e`         | Playwright con APIs simuladas                                                    |
 | `npm run db:migrate`       | Aplica las migraciones pendientes                                                |
@@ -101,18 +90,12 @@ NEXT_PUBLIC_MAPTILER_STYLE=streets-v4   # opcional
 
 En la configuración de la key:
 
-- **Allowed HTTP Origins:** `localhost`, `127.0.0.1` y tu dominio de producción, sin protocolo ni puerto (`parkflow.vercel.app`, `tudominio.com`).
+- **Allowed HTTP Origins:** `localhost`, `127.0.0.1` y tu dominio de producción, sin protocolo ni puerto (`aparcat.vercel.app`, `tudominio.com`).
 - **Allowed user-agent header:** déjalo **vacío** para la web. Los navegadores no permiten fijar un User-Agent propio; ese campo es para apps nativas o peticiones de servidor.
 
 La búsqueda usa MapTiler Geocoding limitado al área de Valencia. Si no hay key, el mapa muestra un fondo neutro con las capas de datos y la búsqueda cae al endpoint local de calles.
 
-Para Docker, la key se inyecta en tiempo de build porque `NEXT_PUBLIC_*` se compila en el bundle:
-
-```bash
-# PowerShell: lee la key de .env.local y reconstruye sin imprimirla
-$env:NEXT_PUBLIC_MAPTILER_KEY = (Get-Content .env.local | Where-Object { $_ -match '^NEXT_PUBLIC_MAPTILER_KEY=' }) -replace '^NEXT_PUBLIC_MAPTILER_KEY=', ''
-docker compose up -d --build
-```
+En Vercel, define `NEXT_PUBLIC_MAPTILER_KEY` en las variables de entorno del proyecto: se compila en el bundle durante el build.
 
 ## Estructura
 
@@ -134,7 +117,7 @@ tasks/        plan y lista de tareas
 
 ## Pruebas
 
-Las pruebas unitarias no tocan la red. Las de integración usan el PostgreSQL de Docker y aplican las migraciones automáticamente. El probe de fuentes es el único que consulta al Ayuntamiento, y se ejecuta a mano o en un job nocturno.
+Las pruebas unitarias no tocan la red. Las de integración usan la base de `DATABASE_URL` y aplican las migraciones automáticamente. El probe de fuentes es el único que consulta al Ayuntamiento, y se ejecuta a mano o en un job nocturno.
 
 ## Plan y decisiones
 
@@ -144,4 +127,4 @@ Las pruebas unitarias no tocan la red. Las de integración usan el PostgreSQL de
 
 ## Aviso legal
 
-Parkflow no está afiliado al Ajuntament de València. Las señales de tráfico y las normas de estacionamiento prevalecen sobre cualquier recomendación de la app. Consulta [Privacidad](/privacidad) y [Aviso legal](/aviso-legal). El despliegue se documenta en [docs/deploy.md](docs/deploy.md).
+Aparcat no está afiliado al Ajuntament de València. Las señales de tráfico y las normas de estacionamiento prevalecen sobre cualquier recomendación de la app. Consulta [Privacidad](/privacidad) y [Aviso legal](/aviso-legal). El despliegue se documenta en [docs/deploy.md](docs/deploy.md).
