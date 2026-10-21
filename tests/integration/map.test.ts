@@ -36,6 +36,9 @@ describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
     expect(response.meta).toMatchObject({ segments: 1, facilities: 2, reports: 2, cameras: 1 });
     expect(response.layers.segments.features).toHaveLength(1);
     expect(response.layers.facilities.features).toHaveLength(2);
+    expect(response.layers.facilities.features.some((f) => f.properties.id === 'near-stale')).toBe(
+      false,
+    );
     expect(response.layers.reports.features).toHaveLength(2);
     expect(response.layers.cameras.features).toHaveLength(1);
     expect(response.layers.cameras.features[0].properties).toMatchObject({

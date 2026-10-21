@@ -83,6 +83,21 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     expect(unknown?.ageMinutes).toBeNull();
   });
 
+  it('excluye los garajes con datos antiguos', async () => {
+    const response = await findNearbyCandidates({
+      latitude: TEST_ORIGIN.latitude,
+      longitude: TEST_ORIGIN.longitude,
+      radiusMeters: 800,
+      horizonHours: 1,
+      now: new Date(),
+    });
+
+    expect(response.candidates.some((candidate) => candidate.id === 'garage:near-stale')).toBe(
+      false,
+    );
+    expect(response.meta.facilities).toBe(2);
+  });
+
   it('excluye los candidatos fuera del radio', async () => {
     const response = await findNearbyCandidates({
       latitude: TEST_ORIGIN.latitude,

@@ -22,6 +22,7 @@ import type {
 } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
 import { getMapStyle } from '@/lib/map-style';
+import { mapsUrl } from '@/lib/maps';
 import type { MapLayerVisibility } from './layers';
 
 const CENTER = { latitude: 39.4699, longitude: -0.3763 };
@@ -239,7 +240,10 @@ export function ParkingMap({ data, origin, selected, layers, onOrigin }: Parking
           map.on('click', layer, (event: MapLayerMouseEvent) => {
             const feature = event.features?.[0];
             if (!feature) return;
-            showPopup(event, facilityPopup(feature.properties as unknown as MapFacilityProperties));
+            showPopup(
+              event,
+              facilityPopup(feature.properties as unknown as MapFacilityProperties, event.lngLat),
+            );
           });
         }
 
@@ -260,7 +264,10 @@ export function ParkingMap({ data, origin, selected, layers, onOrigin }: Parking
         map.on('click', 'segments-line', (event: MapLayerMouseEvent) => {
           const feature = event.features?.[0];
           if (!feature) return;
-          showPopup(event, segmentPopup(feature.properties as unknown as MapSegmentProperties));
+          showPopup(
+            event,
+            segmentPopup(feature.properties as unknown as MapSegmentProperties, event.lngLat),
+          );
         });
 
         map.on('click', (event: MapMouseEvent) => {
@@ -435,7 +442,10 @@ function createCameraIcon(): ImageData {
   return context.getImageData(0, 0, size, size);
 }
 
-function facilityPopup(properties: MapFacilityProperties): HTMLElement {
+function facilityPopup(
+  properties: MapFacilityProperties,
+  location: { lng: number; lat: number },
+): HTMLElement {
   const root = document.createElement('div');
   root.className = 'space-y-1 text-sm';
 
@@ -463,11 +473,20 @@ function facilityPopup(properties: MapFacilityProperties): HTMLElement {
       ? 'sin hora de actualización'
       : `actualizado hace ${properties.ageMinutes} min`;
 
-  root.append(title, type, availability, detail);
+  root.append(
+    title,
+    type,
+    availability,
+    detail,
+    mapsLink({ longitude: location.lng, latitude: location.lat }),
+  );
   return root;
 }
 
-function segmentPopup(properties: MapSegmentProperties): HTMLElement {
+function segmentPopup(
+  properties: MapSegmentProperties,
+  location: { lng: number; lat: number },
+): HTMLElement {
   const root = document.createElement('div');
   root.className = 'space-y-1 text-sm';
 
@@ -486,8 +505,24 @@ function segmentPopup(properties: MapSegmentProperties): HTMLElement {
   detail.className = 'text-xs text-zinc-500';
   detail.textContent = `Consultada hace ${properties.ageMinutes} min. Puede incluir partes sin plazas. No es una reserva.`;
 
-  root.append(title, type, availability, detail);
+  root.append(
+    title,
+    type,
+    availability,
+    detail,
+    mapsLink({ longitude: location.lng, latitude: location.lat }),
+  );
   return root;
+}
+
+function mapsLink(location: Coordinates): HTMLAnchorElement {
+  const link = document.createElement('a');
+  link.href = mapsUrl(location);
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.className = 'inline-block text-xs font-medium text-emerald-700 underline underline-offset-2';
+  link.textContent = 'Abrir en Maps';
+  return link;
 }
 
 function cameraPopup(properties: MapCameraProperties): HTMLElement {

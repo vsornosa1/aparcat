@@ -1,6 +1,11 @@
 import { getSql } from '@/db/client';
 import { garageAvailability, streetAvailability } from '@/domain/availability';
-import { ageMinutes, classifyFreshness, confidenceFor } from '@/domain/freshness';
+import {
+  FRESHNESS_THRESHOLDS_MINUTES,
+  ageMinutes,
+  classifyFreshness,
+  confidenceFor,
+} from '@/domain/freshness';
 import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 import { attribution } from './attribution';
 import {
@@ -29,6 +34,8 @@ const MAX_SEGMENTS = 500;
 const MAX_FACILITIES = 100;
 const MAX_REPORTS = 200;
 const MAX_CAMERAS = 1_000;
+const GARAGE_MAX_AGE_MINUTES = FRESHNESS_THRESHOLDS_MINUTES.garage.recent;
+const STREET_MAX_AGE_MINUTES = FRESHNESS_THRESHOLDS_MINUTES.street_prediction.recent;
 
 export class InvalidBoundsError extends Error {
   constructor(message: string) {
@@ -100,6 +107,7 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
       join occupancy_predictions p
         on p.segment_id = s.id and p.horizon_hours = 1
       where s.geom && ST_MakeEnvelope(${bounds.minLng}, ${bounds.minLat}, ${bounds.maxLng}, ${bounds.maxLat}, 4326)
+        and p.fetched_at >= now() - make_interval(mins => ${STREET_MAX_AGE_MINUTES})
       order by s.street_name
       limit ${MAX_SEGMENTS}
     `,
@@ -113,6 +121,10 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
         ST_AsGeoJSON(geom)::json as geometry
       from parking_facilities
       where geom && ST_MakeEnvelope(${bounds.minLng}, ${bounds.minLat}, ${bounds.maxLng}, ${bounds.maxLat}, 4326)
+        and (
+          source_updated_at is null
+          or source_updated_at >= now() - make_interval(mins => ${GARAGE_MAX_AGE_MINUTES})
+        )
       order by name
       limit ${MAX_FACILITIES}
     `,

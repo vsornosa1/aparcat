@@ -17,6 +17,7 @@ export async function seedNearbyFixtures(sql: Sql): Promise<void> {
     values
       ('near-facility', 'Garaje de prueba', 100, 80, ${now}, ${now}, ST_SetSRID(ST_MakePoint(10.001, 10.001), 4326)),
       ('near-unknown', 'Garaje sin dato', 50, null, null, ${now}, ST_SetSRID(ST_MakePoint(10.0005, 10.0005), 4326)),
+      ('near-stale', 'Garaje antiguo', 100, 10, now() - interval '2 days', ${now}, ST_SetSRID(ST_MakePoint(10.0003, 10.0003), 4326)),
       ('near-far', 'Garaje lejano', 200, 150, ${now}, ${now}, ST_SetSRID(ST_MakePoint(10.05, 10.05), 4326))
   `;
 

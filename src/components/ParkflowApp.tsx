@@ -122,15 +122,6 @@ export function ParkflowApp() {
     [nearby, selectedId],
   );
 
-  const counts = mapData
-    ? {
-        garages: mapData.meta.facilities,
-        streets: mapData.meta.segments,
-        cameras: mapData.meta.cameras,
-        reports: mapData.meta.reports,
-      }
-    : undefined;
-
   return (
     <main className="flex min-h-dvh flex-col lg:h-dvh lg:flex-row">
       <section
@@ -147,7 +138,7 @@ export function ParkflowApp() {
 
         <div className="absolute inset-x-3 top-3 z-10 flex flex-col gap-2 sm:w-96">
           <SearchBar origin={origin} onOrigin={handleOrigin} />
-          <LayerControls layers={layers} counts={counts} onToggle={toggleLayer} />
+          <LayerControls layers={layers} onToggle={toggleLayer} />
           {!hasBasemap && (
             <p
               role="status"

@@ -1,6 +1,6 @@
 import { getSql } from '@/db/client';
 import { garageAvailability, streetAvailability } from '@/domain/availability';
-import { ageMinutes as ageInMinutes } from '@/domain/freshness';
+import { FRESHNESS_THRESHOLDS_MINUTES, ageMinutes as ageInMinutes } from '@/domain/freshness';
 import { clamp } from '@/domain/numbers';
 import { rankCandidates } from '@/domain/ranking';
 import type { CandidateInput, Coordinates, RankedCandidate } from '@/domain/types';
@@ -43,6 +43,8 @@ const MAX_CANDIDATES = 10;
 const FACILITY_REPORT_RADIUS_METERS = 100;
 const STREET_REPORT_RADIUS_METERS = 75;
 const REPORT_TTL_MINUTES = 15;
+const GARAGE_MAX_AGE_MINUTES = FRESHNESS_THRESHOLDS_MINUTES.garage.recent;
+const STREET_MAX_AGE_MINUTES = FRESHNESS_THRESHOLDS_MINUTES.street_prediction.recent;
 
 export async function findNearbyCandidates(options: NearbyOptions): Promise<NearbyResponse> {
   const sql = getSql();
@@ -77,6 +79,10 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
         ), 0) as report_signal
       from parking_facilities f, origin o
       where ST_DWithin(f.geom::geography, o.geom::geography, ${options.radiusMeters})
+        and (
+          f.source_updated_at is null
+          or f.source_updated_at >= now() - make_interval(mins => ${GARAGE_MAX_AGE_MINUTES})
+        )
       order by distance_meters
       limit 100
     `,
@@ -110,6 +116,7 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
         on p.segment_id = s.id and p.horizon_hours = ${options.horizonHours}
       cross join origin o
       where ST_DWithin(s.geom::geography, o.geom::geography, ${options.radiusMeters})
+        and p.fetched_at >= now() - make_interval(mins => ${STREET_MAX_AGE_MINUTES})
       order by distance_meters
       limit 300
     `

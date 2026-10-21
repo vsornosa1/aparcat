@@ -3,6 +3,7 @@
 import { attribution } from '@/api/attribution';
 import type { Candidate, NearbyResponse } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
+import { mapsUrl } from '@/lib/maps';
 import { ReportButtons } from '../reports/ReportButtons';
 import { AvailabilityBadge } from './AvailabilityBadge';
 import { FreshnessLabel } from './FreshnessLabel';
@@ -38,7 +39,7 @@ export function RecommendationSheet({
 }: RecommendationSheetProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="border-b border-zinc-200 px-4 py-3">
+      <header className="border-b border-zinc-200 px-4 py-2.5">
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-semibold tracking-tight text-zinc-900">Parkflow</h1>
           <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
@@ -50,7 +51,7 @@ export function RecommendationSheet({
         </p>
       </header>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+      <div className="flex-1 space-y-3 overflow-y-auto p-3.5">
         {!origin && <IdleState />}
 
         {origin && state === 'loading' && <LoadingState />}
@@ -84,12 +85,9 @@ export function RecommendationSheet({
         )}
       </div>
 
-      <footer className="space-y-1 border-t border-zinc-200 px-4 py-3">
-        <p className="text-[11px] leading-snug text-zinc-500">
-          Predicción orientativa. Parkflow no garantiza ni reserva plazas; respeta la señalización.
-        </p>
-        <p className="text-[11px] text-zinc-500">
-          Datos:{' '}
+      <footer className="border-t border-zinc-200 px-4 py-2 text-[10px] leading-relaxed text-zinc-500">
+        <p>
+          Predicción orientativa · no reserva · Datos:{' '}
           <a
             href={attribution.url}
             target="_blank"
@@ -100,7 +98,7 @@ export function RecommendationSheet({
           </a>{' '}
           (CC BY 4.0) · Mapa: MapTiler © OpenStreetMap
         </p>
-        <nav aria-label="Información legal" className="flex gap-3 text-[11px] text-zinc-500">
+        <nav aria-label="Información legal" className="mt-0.5 flex gap-2">
           <a href="/privacidad" className="hover:text-zinc-700">
             Privacidad
           </a>
@@ -236,30 +234,25 @@ function CandidateCard({
               {candidate.kind === 'garage'
                 ? 'Garaje público · plazas libres'
                 : 'Calle · predicción municipal 1 h'}{' '}
-              · a {candidate.walkingMinutes} min andando
+              · a {candidate.walkingMinutes} min · {Math.round(candidate.distanceMeters)} m
             </p>
-            <p className="mt-1 text-xs leading-snug text-zinc-600">{candidate.reason}</p>
-            <div className="mt-1.5 flex items-center justify-between gap-2">
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-zinc-500">
               <FreshnessLabel freshness={candidate.freshness} ageMinutes={candidate.ageMinutes} />
-              <span className="text-[11px] text-zinc-400">
-                {Math.round(candidate.distanceMeters)} m
-              </span>
+              <span aria-hidden="true">·</span>
+              <span>Confianza {confidenceLabel(candidate.confidence)}</span>
             </div>
           </div>
         </div>
       </button>
 
-      <div className="flex items-center justify-between border-t border-zinc-100 px-3 py-2">
-        <span className="text-[11px] text-zinc-500">
-          Confianza {confidenceLabel(candidate.confidence)}
-        </span>
+      <div className="border-t border-zinc-100 px-3 py-1.5 text-right">
         <a
-          href={directionsUrl(candidate.location)}
+          href={mapsUrl(candidate.location)}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-medium text-emerald-700 hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
-          Cómo llegar
+          Abrir en Maps
         </a>
       </div>
     </article>
@@ -275,8 +268,4 @@ function confidenceLabel(confidence: Candidate['confidence']): string {
     case 'low':
       return 'baja';
   }
-}
-
-function directionsUrl(location: Coordinates): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`;
 }

@@ -139,7 +139,7 @@ test('la búsqueda muestra un garaje por defecto', async ({ page }) => {
   await expect(page.getByText('80% libre', { exact: true })).toBeVisible();
   await expect(page.getByText('Garaje público · plazas libres')).toBeVisible();
   await expect(page.getByText('En vivo · ahora')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Cómo llegar' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Abrir en Maps' })).toBeVisible();
   await expect(page.getByText('Predicción orientativa')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Ajuntament de València' })).toBeVisible();
 });
@@ -147,10 +147,10 @@ test('la búsqueda muestra un garaje por defecto', async ({ page }) => {
 test('las calles con predicción se activan desde Capas', async ({ page }) => {
   await choosePlace(page);
 
-  await page.getByText('Capas del mapa').click();
-  const streetsToggle = page.getByRole('checkbox', { name: /Calles con predicción/ });
-  await expect(streetsToggle).not.toBeChecked();
-  await streetsToggle.check();
+  const streetsChip = page.getByRole('button', { name: /^Calles:/ });
+  await expect(streetsChip).toHaveAttribute('aria-pressed', 'false');
+  await streetsChip.click();
+  await expect(streetsChip).toHaveAttribute('aria-pressed', 'true');
 
   await expect(page.getByRole('heading', { name: 'Carrer de la Prova' })).toBeVisible();
   await expect(page.getByText('Calle · predicción municipal 1 h')).toBeVisible();
