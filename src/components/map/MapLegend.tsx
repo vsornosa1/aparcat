@@ -5,7 +5,6 @@ const COLORS = [
   { color: 'bg-emerald-600', label: 'Alta' },
   { color: 'bg-amber-500', label: 'Media' },
   { color: 'bg-red-600', label: 'Baja' },
-  { color: 'bg-zinc-400', label: 'Sin datos' },
 ];
 
 const ORA_COLORS = [

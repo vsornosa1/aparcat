@@ -121,10 +121,9 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
         ST_AsGeoJSON(geom)::json as geometry
       from parking_facilities
       where geom && ST_MakeEnvelope(${bounds.minLng}, ${bounds.minLat}, ${bounds.maxLng}, ${bounds.maxLat}, 4326)
-        and (
-          source_updated_at is null
-          or source_updated_at >= now() - make_interval(mins => ${GARAGE_MAX_AGE_MINUTES})
-        )
+        and free_spaces is not null
+        and capacity > 0
+        and source_updated_at >= now() - make_interval(mins => ${GARAGE_MAX_AGE_MINUTES})
       order by name
       limit ${MAX_FACILITIES}
     `,

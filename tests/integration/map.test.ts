@@ -33,12 +33,15 @@ describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
   it('devuelve las capas del mapa dentro del bbox', async () => {
     const response = await loadMapData(TEST_BOUNDS, new Date());
 
-    expect(response.meta).toMatchObject({ segments: 1, facilities: 2, reports: 2, cameras: 1 });
+    expect(response.meta).toMatchObject({ segments: 1, facilities: 1, reports: 2, cameras: 1 });
     expect(response.layers.segments.features).toHaveLength(1);
-    expect(response.layers.facilities.features).toHaveLength(2);
+    expect(response.layers.facilities.features).toHaveLength(1);
     expect(response.layers.facilities.features.some((f) => f.properties.id === 'near-stale')).toBe(
       false,
     );
+    expect(
+      response.layers.facilities.features.some((f) => f.properties.id === 'near-unknown'),
+    ).toBe(false);
     expect(response.layers.reports.features).toHaveLength(2);
     expect(response.layers.cameras.features).toHaveLength(1);
     expect(response.layers.cameras.features[0].properties).toMatchObject({
@@ -60,11 +63,6 @@ describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
       (feature) => feature.properties.id === 'near-facility',
     );
     expect(facility?.properties.availability).toBe(0.8);
-
-    const unknown = response.layers.facilities.features.find(
-      (feature) => feature.properties.id === 'near-unknown',
-    );
-    expect(unknown?.properties.availability).toBeNull();
 
     const report = response.layers.reports.features[0];
     expect(report.properties.kind).toBe('spot_free');

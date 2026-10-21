@@ -34,12 +34,12 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     });
 
     expect(response.meta).toMatchObject({
-      facilities: 2,
+      facilities: 1,
       streetSegments: 1,
       reports: 2,
-      totalConsidered: 3,
+      totalConsidered: 2,
     });
-    expect(response.candidates).toHaveLength(3);
+    expect(response.candidates).toHaveLength(2);
     expect(nearbyResponseSchema.safeParse(response).success).toBe(true);
 
     const garage = response.candidates.find((candidate) => candidate.id === 'garage:near-facility');
@@ -68,7 +68,7 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     expect(street?.reason).toContain('Predicción municipal');
   });
 
-  it('coloca al final los candidatos sin disponibilidad', async () => {
+  it('excluye los garajes sin datos', async () => {
     const response = await findNearbyCandidates({
       latitude: TEST_ORIGIN.latitude,
       longitude: TEST_ORIGIN.longitude,
@@ -77,12 +77,9 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
       now: new Date(),
     });
 
-    const unknown = response.candidates.at(-1);
-    expect(unknown?.id).toBe('garage:near-unknown');
-    expect(unknown?.availability).toBeNull();
-    expect(unknown?.confidence).toBe('low');
-    expect(unknown?.freshness).toBe('unknown');
-    expect(unknown?.ageMinutes).toBeNull();
+    expect(response.candidates.some((candidate) => candidate.id === 'garage:near-unknown')).toBe(
+      false,
+    );
   });
 
   it('excluye los garajes con datos antiguos', async () => {
@@ -97,7 +94,7 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     expect(response.candidates.some((candidate) => candidate.id === 'garage:near-stale')).toBe(
       false,
     );
-    expect(response.meta.facilities).toBe(2);
+    expect(response.meta.facilities).toBe(1);
   });
 
   it('excluye los candidatos fuera del radio', async () => {
@@ -110,7 +107,7 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     });
 
     expect(response.candidates.some((candidate) => candidate.id === 'garage:near-far')).toBe(false);
-    expect(response.meta.facilities).toBe(2);
+    expect(response.meta.facilities).toBe(1);
   });
 
   it('omite las calles cuando la capa está desactivada', async () => {

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MapResponse, NearbyResponse, OraFeatureCollection } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
 import { fetchMapData, fetchNearby, fetchOraData, sendReport } from '@/lib/api-client';
+import { withReliableCandidates, withReliableMapFacilities } from '@/lib/candidates';
 import { hasBasemap } from '@/lib/map-style';
 import { LayerControls } from './map/LayerControls';
 import { MapLegend } from './map/MapLegend';
@@ -37,7 +38,7 @@ export function ParkflowApp() {
 
   const loadMap = useCallback(async () => {
     try {
-      setMapData(await fetchMapData());
+      setMapData(withReliableMapFacilities(await fetchMapData()));
     } catch {
       // El mapa base sigue siendo útil aunque fallen las capas municipales.
     }
@@ -67,9 +68,9 @@ export function ParkflowApp() {
     setSelectedId(null);
 
     try {
-      const data = await fetchNearby(coordinates.latitude, coordinates.longitude, {
-        includeStreets,
-      });
+      const data = withReliableCandidates(
+        await fetchNearby(coordinates.latitude, coordinates.longitude, { includeStreets }),
+      );
       if (currentRequest !== requestId.current) return;
 
       setNearby(data);

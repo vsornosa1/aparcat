@@ -79,10 +79,9 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
         ), 0) as report_signal
       from parking_facilities f, origin o
       where ST_DWithin(f.geom::geography, o.geom::geography, ${options.radiusMeters})
-        and (
-          f.source_updated_at is null
-          or f.source_updated_at >= now() - make_interval(mins => ${GARAGE_MAX_AGE_MINUTES})
-        )
+        and f.free_spaces is not null
+        and f.capacity > 0
+        and f.source_updated_at >= now() - make_interval(mins => ${GARAGE_MAX_AGE_MINUTES})
       order by distance_meters
       limit 100
     `,
@@ -169,7 +168,9 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
     });
   }
 
-  const ranked = rankCandidates(candidates, { now: options.now });
+  const ranked = rankCandidates(candidates, { now: options.now }).filter(
+    (candidate) => candidate.confidence !== 'low' && candidate.availability !== null,
+  );
 
   return {
     origin,
