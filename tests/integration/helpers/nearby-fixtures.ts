@@ -37,6 +37,16 @@ export async function seedNearbyFixtures(sql: Sql): Promise<void> {
   `;
 
   await sql`
+    insert into ora_markings (id, color, fetched_at, geom)
+    values (
+      'near-ora',
+      'Azul',
+      ${now},
+      ST_SetSRID(ST_MakeLine(ST_MakePoint(10.0005, 10.0002), ST_MakePoint(10.0012, 10.0002)), 4326)
+    )
+  `;
+
+  await sql`
     insert into availability_reports (kind, device_hash, expires_at, geom)
     values
       ('spot_free', 'seed', now() + interval '15 minutes', ST_SetSRID(ST_MakePoint(10.0015, 10.0002), 4326)),
@@ -67,4 +77,5 @@ export async function cleanupNearbyFixtures(sql: Sql): Promise<void> {
   await sql`delete from parking_segments where id like 'near-%'`;
   await sql`delete from parking_facilities where id like 'near-%'`;
   await sql`delete from traffic_cameras where id like 'near-%'`;
+  await sql`delete from ora_markings where id like 'near-%'`;
 }

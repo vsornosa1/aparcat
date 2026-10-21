@@ -8,6 +8,14 @@ const COLORS = [
   { color: 'bg-zinc-400', label: 'Sin datos' },
 ];
 
+const ORA_COLORS = [
+  { color: 'bg-blue-600', label: 'Azul · rotación' },
+  { color: 'bg-orange-500', label: 'Naranja · mixta' },
+  { color: 'bg-emerald-600', label: 'Verde · residentes' },
+  { color: 'bg-zinc-300', label: 'Blanco · libre' },
+  { color: 'bg-yellow-400', label: 'Amarillo · restringido' },
+];
+
 export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
   const [open, setOpen] = useState(false);
 
@@ -17,16 +25,35 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
         id="map-legend"
         className={`${open ? 'block' : 'hidden'} pointer-events-auto w-72 max-w-[calc(100vw-5rem)] rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-[11px] shadow-sm backdrop-blur lg:block`}
       >
-        <p className="font-medium text-zinc-700">Disponibilidad</p>
+        <p className="font-medium text-zinc-700">Leyenda</p>
 
-        <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-          {COLORS.map((item) => (
-            <li key={item.label} className="flex items-center gap-1.5 text-zinc-600">
-              <span aria-hidden="true" className={`size-2 rounded-full ${item.color}`} />
-              {item.label}
-            </li>
-          ))}
-        </ul>
+        {layers.streets && (
+          <div className="mt-1">
+            <p className="text-zinc-600">Predicción de calles</p>
+            <ul className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
+              {COLORS.map((item) => (
+                <li key={item.label} className="flex items-center gap-1.5 text-zinc-600">
+                  <span aria-hidden="true" className={`size-2 rounded-full ${item.color}`} />
+                  {item.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {layers.ora && (
+          <div className="mt-1">
+            <p className="text-zinc-600">Zonas ORA</p>
+            <ul className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
+              {ORA_COLORS.map((item) => (
+                <li key={item.label} className="flex items-center gap-1.5 text-zinc-600">
+                  <span aria-hidden="true" className={`size-2 rounded-full ${item.color}`} />
+                  {item.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <p className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-zinc-600">
           {layers.garages && (
@@ -64,7 +91,10 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
         </p>
 
         <p className="mt-1 text-[10px] leading-snug text-zinc-500">
-          Garajes: plazas libres · Calles: probabilidad prevista · no reserva
+          Garajes: plazas libres · Calles: probabilidad prevista
+        </p>
+        <p className="text-[10px] leading-snug text-zinc-500">
+          ORA: color de zona (sin aforo) · no reserva
         </p>
         <p className="text-[10px] leading-snug text-zinc-500">
           Mapa: MapTiler · Datos: Ajuntament de València (CC BY 4.0)

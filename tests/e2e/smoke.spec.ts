@@ -69,6 +69,9 @@ const CREATED_REPORT = {
 
 async function mockApis(page: Page): Promise<void> {
   await page.route('**/api/parking/map', (route) => route.fulfill({ json: MAP_RESPONSE }));
+  await page.route('**/api/parking/ora**', (route) =>
+    route.fulfill({ json: { type: 'FeatureCollection', features: [] } }),
+  );
   await page.route('**/api/parking/nearby*', (route) => {
     const includeStreets =
       new URL(route.request().url()).searchParams.get('includeStreets') === '1';
@@ -160,6 +163,18 @@ test('en móvil la leyenda no tapa el mapa hasta abrirla', async ({ page }) => {
 
   await expect(legend).toBeVisible();
   await expect(legendButton).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('en móvil la capa ORA se puede activar y desactivar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await choosePlace(page);
+
+  const ora = page.getByRole('button', { name: /^ORA:/ });
+  await expect(ora).toHaveAttribute('aria-pressed', 'true');
+  await ora.click();
+  await expect(ora).toHaveAttribute('aria-pressed', 'false');
+  await ora.click();
+  await expect(ora).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('las calles con predicción se activan desde Capas', async ({ page }) => {

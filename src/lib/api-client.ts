@@ -3,6 +3,7 @@ import type {
   CreateReportInput,
   MapResponse,
   NearbyResponse,
+  OraFeatureCollection,
   Street,
 } from '@/api/contracts';
 import { getDeviceId } from './device-token';
@@ -36,6 +37,10 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 
 export function fetchMapData(): Promise<MapResponse> {
   return request<MapResponse>('/api/parking/map');
+}
+
+export function fetchOraData(): Promise<OraFeatureCollection> {
+  return request<OraFeatureCollection>('/api/parking/ora');
 }
 
 export function fetchNearby(

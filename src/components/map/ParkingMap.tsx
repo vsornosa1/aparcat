@@ -16,9 +16,11 @@ import type {
   Candidate,
   MapCameraProperties,
   MapFacilityProperties,
+  MapOraProperties,
   MapReportProperties,
   MapResponse,
   MapSegmentProperties,
+  OraFeatureCollection,
 } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
 import { formatFreeSpaces } from '@/lib/format';
@@ -58,6 +60,22 @@ const REPORT_COLOR: ExpressionSpecification = [
   '#f97316',
 ];
 
+const ORA_COLOR: ExpressionSpecification = [
+  'match',
+  ['get', 'color'],
+  'Azul',
+  '#2563eb',
+  'Naranja',
+  '#f97316',
+  'Verde',
+  '#16a34a',
+  'Blanco',
+  '#a1a1aa',
+  'Amarillo',
+  '#eab308',
+  '#71717a',
+];
+
 const INTERACTIVE_LAYERS = [
   'facilities-circle',
   'facilities-icon',
@@ -65,17 +83,19 @@ const INTERACTIVE_LAYERS = [
   'cameras-icon',
   'reports-circle',
   'segments-line',
+  'ora-lines',
 ];
 
 interface ParkingMapProps {
   data: MapResponse | null;
+  ora: OraFeatureCollection | null;
   origin: Coordinates | null;
   selected: Candidate | null;
   layers: MapLayerVisibility;
   onOrigin: (origin: Coordinates) => void;
 }
 
-export function ParkingMap({ data, origin, selected, layers, onOrigin }: ParkingMapProps) {
+export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: ParkingMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const popupRef = useRef<Popup | null>(null);
@@ -119,11 +139,23 @@ export function ParkingMap({ data, origin, selected, layers, onOrigin }: Parking
         if (map.getSource('segments')) return;
 
         map.addSource('segments', { type: 'geojson', data: emptyCollection() });
+        map.addSource('ora', { type: 'geojson', data: emptyCollection() });
         map.addSource('facilities', { type: 'geojson', data: emptyCollection() });
         map.addSource('cameras', { type: 'geojson', data: emptyCollection() });
         map.addSource('reports', { type: 'geojson', data: emptyCollection() });
         map.addSource('origin', { type: 'geojson', data: emptyCollection() });
         map.addSource('selected', { type: 'geojson', data: emptyCollection() });
+
+        map.addLayer({
+          id: 'ora-lines',
+          type: 'line',
+          source: 'ora',
+          paint: {
+            'line-color': ORA_COLOR,
+            'line-width': 2,
+            'line-opacity': 0.8,
+          },
+        });
 
         map.addLayer({
           id: 'segments-line',
@@ -271,6 +303,12 @@ export function ParkingMap({ data, origin, selected, layers, onOrigin }: Parking
           );
         });
 
+        map.on('click', 'ora-lines', (event: MapLayerMouseEvent) => {
+          const feature = event.features?.[0];
+          if (!feature) return;
+          showPopup(event, oraPopup(feature.properties as unknown as MapOraProperties));
+        });
+
         map.on('click', (event: MapMouseEvent) => {
           const hits = map.queryRenderedFeatures(event.point, { layers: INTERACTIVE_LAYERS });
           if (hits.length > 0) return;
@@ -314,6 +352,7 @@ export function ParkingMap({ data, origin, selected, layers, onOrigin }: Parking
     (map.getSource('segments') as GeoJSONSource | undefined)?.setData(
       data?.layers.segments ?? emptyCollection(),
     );
+    (map.getSource('ora') as GeoJSONSource | undefined)?.setData(ora ?? emptyCollection());
     (map.getSource('facilities') as GeoJSONSource | undefined)?.setData(
       data?.layers.facilities ?? emptyCollection(),
     );
@@ -323,7 +362,7 @@ export function ParkingMap({ data, origin, selected, layers, onOrigin }: Parking
     (map.getSource('reports') as GeoJSONSource | undefined)?.setData(
       data?.layers.reports ?? emptyCollection(),
     );
-  }, [ready, data]);
+  }, [ready, data, ora]);
 
   useEffect(() => {
     if (!ready) return;
@@ -331,6 +370,7 @@ export function ParkingMap({ data, origin, selected, layers, onOrigin }: Parking
     if (!map) return;
 
     setLayerVisibility(map, 'segments-line', layers.streets);
+    setLayerVisibility(map, 'ora-lines', layers.ora);
     setLayerVisibility(map, 'facilities-circle', layers.garages);
     setLayerVisibility(map, 'facilities-icon', layers.garages);
     setLayerVisibility(map, 'reports-circle', layers.reports);
@@ -518,6 +558,34 @@ function segmentPopup(
   );
   return root;
 }
+
+function oraPopup(properties: MapOraProperties): HTMLElement {
+  const root = document.createElement('div');
+  root.className = 'space-y-1 text-sm';
+
+  const title = document.createElement('strong');
+  title.textContent = properties.color ? `Zona ${properties.color.toLowerCase()}` : 'Zona ORA';
+
+  const type = document.createElement('p');
+  type.className = 'text-xs text-zinc-500';
+  type.textContent = 'Aparcamiento regulado (ORA)';
+
+  const detail = document.createElement('p');
+  detail.className = 'text-xs text-zinc-500';
+  detail.textContent =
+    ORA_DESCRIPTIONS[properties.color ?? ''] ?? 'El Ayuntamiento no publica aforo por tramo.';
+
+  root.append(title, type, detail);
+  return root;
+}
+
+const ORA_DESCRIPTIONS: Record<string, string> = {
+  Azul: 'Rotación: pago y límite de tiempo.',
+  Naranja: 'Mixta: residentes y visitantes.',
+  Verde: 'Exclusiva para residentes.',
+  Blanco: 'Libre y gratuita.',
+  Amarillo: 'Restringida: carga y descarga, bus o movilidad reducida.',
+};
 
 function mapsLink(location: Coordinates): HTMLAnchorElement {
   const link = document.createElement('a');

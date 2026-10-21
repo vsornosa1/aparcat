@@ -2,9 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { MapResponse, NearbyResponse } from '@/api/contracts';
+import type { MapResponse, NearbyResponse, OraFeatureCollection } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
-import { fetchMapData, fetchNearby, sendReport } from '@/lib/api-client';
+import { fetchMapData, fetchNearby, fetchOraData, sendReport } from '@/lib/api-client';
 import { hasBasemap } from '@/lib/map-style';
 import { LayerControls } from './map/LayerControls';
 import { MapLegend } from './map/MapLegend';
@@ -24,6 +24,7 @@ type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 export function ParkflowApp() {
   const [origin, setOrigin] = useState<Coordinates | null>(null);
   const [mapData, setMapData] = useState<MapResponse | null>(null);
+  const [oraData, setOraData] = useState<OraFeatureCollection | null>(null);
   const [nearby, setNearby] = useState<NearbyResponse | null>(null);
   const [state, setState] = useState<LoadState>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export function ParkflowApp() {
   const [isReporting, setIsReporting] = useState(false);
   const [layers, setLayers] = useState<MapLayerVisibility>(DEFAULT_LAYERS);
   const requestId = useRef(0);
+  const oraRequested = useRef(false);
 
   const loadMap = useCallback(async () => {
     try {
@@ -46,6 +48,17 @@ export function ParkflowApp() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadMap();
   }, [loadMap]);
+
+  useEffect(() => {
+    if (!layers.ora || oraRequested.current) return;
+
+    oraRequested.current = true;
+    void fetchOraData()
+      .then(setOraData)
+      .catch(() => {
+        oraRequested.current = false;
+      });
+  }, [layers.ora]);
 
   const loadNearby = useCallback(async (coordinates: Coordinates, includeStreets: boolean) => {
     const currentRequest = ++requestId.current;
@@ -130,6 +143,7 @@ export function ParkflowApp() {
       >
         <ParkingMap
           data={mapData}
+          ora={oraData}
           origin={origin}
           selected={selected}
           layers={layers}

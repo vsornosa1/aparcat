@@ -47,7 +47,7 @@ export function RecommendationSheet({
           </span>
         </div>
         <p className="mt-0.5 hidden text-xs text-zinc-500 sm:block">
-          Garajes y reportes de la comunidad. Las calles son una predicción opcional.
+          Garajes, reportes y zonas ORA. Las calles son una predicción opcional.
         </p>
       </header>
 
@@ -116,10 +116,8 @@ function IdleState() {
     <div className="rounded-xl border border-dashed border-zinc-300 p-4">
       <p className="text-sm font-medium text-zinc-800">Encuentra aparcamiento libre ahora</p>
       <p className="mt-1 text-xs leading-snug text-zinc-600">
-        Busca una dirección o usa tu ubicación. El mapa arranca con los{' '}
-        <strong>garajes públicos</strong> (plazas libres publicadas por el Ayuntamiento) y los{' '}
-        <strong>reportes</strong> de otros conductores. Si quieres la estimación municipal de las
-        calles, activa «Calles con predicción» en Capas.
+        Busca una dirección o usa tu ubicación. El mapa arranca con garajes, reportes y zonas ORA;
+        las calles con predicción se activan en Capas.
       </p>
     </div>
   );

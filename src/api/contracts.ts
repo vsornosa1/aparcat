@@ -163,3 +163,11 @@ export interface MapResponse {
   };
   attribution: Attribution;
 }
+
+export interface MapOraProperties {
+  layer: 'ora';
+  id: string;
+  color: string | null;
+}
+
+export type OraFeatureCollection = FeatureCollection<LineString, MapOraProperties>;
