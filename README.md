@@ -1,4 +1,4 @@
-# Aparcat
+# Aparcat 🚗
 
 Webapp para encontrar aparcamiento libre cerca de ti en Valencia sin dar vueltas.
 
