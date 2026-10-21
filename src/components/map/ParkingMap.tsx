@@ -152,8 +152,8 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
           source: 'ora',
           paint: {
             'line-color': ORA_COLOR,
-            'line-width': 2,
-            'line-opacity': 0.8,
+            'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2, 16, 4],
+            'line-opacity': 0.9,
           },
         });
 
