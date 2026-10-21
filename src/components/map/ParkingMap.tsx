@@ -525,21 +525,20 @@ function facilityPopup(
 
   const availability = document.createElement('p');
   availability.className = 'font-medium text-zinc-800';
-  availability.textContent =
-    properties.freeSpaces === null
-      ? 'Sin datos recientes de plazas libres'
-      : formatFreeSpaces(properties.freeSpaces);
+  const freeSpaces = properties.freeSpaces ?? null;
+  const capacity = properties.capacity ?? null;
+  const ageMinutes = properties.ageMinutes ?? null;
+
+  availability.textContent = freeSpaces === null ? 'Sin datos' : formatFreeSpaces(freeSpaces);
 
   const detail = document.createElement('p');
   detail.className = 'text-xs text-zinc-500';
   detail.textContent =
-    properties.capacity !== null && properties.freeSpaces !== null
-      ? `de ${properties.capacity} plazas · `
-      : '';
-  detail.textContent +=
-    properties.ageMinutes === null
-      ? 'sin hora de actualización'
-      : `actualizado hace ${properties.ageMinutes} min`;
+    freeSpaces === null
+      ? 'No hay datos recientes de este garaje.'
+      : `${capacity !== null ? `de ${capacity} plazas · ` : ''}${
+          ageMinutes !== null ? `actualizado hace ${ageMinutes} min` : 'sin hora de actualización'
+        }`;
 
   root.append(
     title,
@@ -573,7 +572,10 @@ function segmentPopup(
 
   const detail = document.createElement('p');
   detail.className = 'text-xs text-zinc-500';
-  detail.textContent = `Consultada hace ${properties.ageMinutes} min. Puede incluir partes sin plazas. No es una reserva.`;
+  const ageMinutes = properties.ageMinutes ?? null;
+  detail.textContent = `${
+    ageMinutes !== null ? `Consultada hace ${ageMinutes} min. ` : 'Sin hora de actualización. '
+  }Puede incluir partes sin plazas. No es una reserva.`;
 
   root.append(
     title,

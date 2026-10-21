@@ -1,5 +1,6 @@
 import type { Candidate } from '@/api/contracts';
 import { formatFreeSpaces } from '@/lib/format';
+import { isNil } from '@/lib/nil';
 
 const TONES = {
   high: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -21,15 +22,13 @@ export function AvailabilityBadge({ candidate }: { candidate: Candidate }) {
   const stale = candidate.freshness === 'stale';
 
   if (candidate.kind === 'garage') {
+    const freeSpaces = candidate.freeSpaces;
     const ratio =
-      candidate.freeSpaces !== null && candidate.capacity
-        ? candidate.freeSpaces / candidate.capacity
+      !isNil(freeSpaces) && candidate.capacity
+        ? freeSpaces / candidate.capacity
         : candidate.availability;
     const tone = stale ? 'unknown' : toneFor(ratio);
-    const label =
-      candidate.freeSpaces === null
-        ? 'Sin datos'
-        : `${formatFreeSpaces(candidate.freeSpaces)}${stale ? ' · antiguo' : ''}`;
+    const label = `${formatFreeSpaces(freeSpaces)}${stale ? ' · antiguo' : ''}`;
 
     return <Badge tone={tone} label={label} />;
   }
@@ -43,7 +42,7 @@ export function AvailabilityBadge({ candidate }: { candidate: Candidate }) {
 }
 
 function toneFor(availability: number | null): Tone {
-  if (availability === null) return 'unknown';
+  if (isNil(availability)) return 'unknown';
   if (availability >= 0.6) return 'high';
   if (availability >= 0.3) return 'medium';
   return 'low';

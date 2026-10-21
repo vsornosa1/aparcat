@@ -10,4 +10,9 @@ describe('formatFreeSpaces', () => {
     expect(formatFreeSpaces(0)).toBe('0 plazas libres');
     expect(formatFreeSpaces(37)).toBe('37 plazas libres');
   });
+
+  it('devuelve Sin datos cuando falta el dato', () => {
+    expect(formatFreeSpaces(null)).toBe('Sin datos');
+    expect(formatFreeSpaces(undefined)).toBe('Sin datos');
+  });
 });

@@ -65,7 +65,7 @@ export function LayerControls({ layers, onToggle }: LayerControlsProps) {
             aria-label={`${item.label}: ${item.hint}`}
             title={item.hint}
             onClick={() => onToggle(item.key)}
-            className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-2 ${
+            className={`cursor-pointer inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-2 ${
               active
                 ? 'border-emerald-600 bg-emerald-600 text-white'
                 : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'

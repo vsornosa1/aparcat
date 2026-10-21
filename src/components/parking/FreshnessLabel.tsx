@@ -1,4 +1,5 @@
 import type { Freshness } from '@/domain/types';
+import { isNil } from '@/lib/nil';
 
 const LABELS: Record<Freshness, string> = {
   live: 'En vivo',
@@ -19,17 +20,20 @@ export function FreshnessLabel({
   ageMinutes,
 }: {
   freshness: Freshness;
-  ageMinutes: number | null;
+  ageMinutes: number | null | undefined;
 }) {
+  const label = LABELS[freshness] ?? LABELS.unknown;
+  const tone = TONES[freshness] ?? TONES.unknown;
+
   return (
-    <span className={`text-xs ${TONES[freshness]}`}>
-      {LABELS[freshness]}
+    <span className={`text-xs ${tone}`}>
+      {label}
       {formatAge(ageMinutes)}
     </span>
   );
 }
 
-function formatAge(minutes: number | null): string {
-  if (minutes === null) return '';
+function formatAge(minutes: number | null | undefined): string {
+  if (isNil(minutes)) return '';
   return minutes <= 1 ? ' · ahora' : ` · hace ${minutes} min`;
 }
