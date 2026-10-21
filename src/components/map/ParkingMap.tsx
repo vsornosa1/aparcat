@@ -69,8 +69,6 @@ const ORA_COLOR: ExpressionSpecification = [
   '#f97316',
   'Verde',
   '#16a34a',
-  'Blanco',
-  '#a1a1aa',
   'Amarillo',
   '#eab308',
   '#71717a',
@@ -615,7 +613,6 @@ const ORA_ZONE_LABELS: Record<string, string> = {
   Azul: 'Zona azul',
   Naranja: 'Zona naranja',
   Verde: 'Zona verde',
-  Blanco: 'Zona blanca',
   Amarillo: 'Zona amarilla',
 };
 
@@ -623,7 +620,6 @@ const ORA_ZONE_TYPES: Record<string, string> = {
   Azul: 'Aparcamiento regulado (ORA)',
   Naranja: 'Aparcamiento regulado (ORA)',
   Verde: 'Aparcamiento regulado (ORA)',
-  Blanco: 'Estacionamiento libre · sin tarifa ORA',
   Amarillo: 'Zona restringida',
 };
 
@@ -631,7 +627,6 @@ const ORA_ZONE_DESCRIPTIONS: Record<string, string> = {
   Azul: 'Pago con límite de tiempo.',
   Naranja: 'Preferente para residentes; los visitantes pueden pagar.',
   Verde: 'Exclusiva para residentes con distintivo.',
-  Blanco: 'Plazas gratuitas y sin restricción. No es una zona de pago.',
   Amarillo: 'Carga y descarga, bus o movilidad reducida.',
 };
 

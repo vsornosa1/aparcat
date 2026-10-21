@@ -28,6 +28,8 @@ describe.skipIf(!hasDatabase)('API de zonas ORA', () => {
 
     expect(response.type).toBe('FeatureCollection');
     expect(response.features).toHaveLength(1);
+    expect(response.features[0].properties.color).toBe('Azul');
+    expect(response.features.some((feature) => feature.properties.color === 'Blanco')).toBe(false);
     expect(response.features[0].geometry.type).toBe('Polygon');
     expect(response.features[0].properties).toMatchObject({
       layer: 'ora',

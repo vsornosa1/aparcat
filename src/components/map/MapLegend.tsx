@@ -11,7 +11,6 @@ const ORA_COLORS = [
   { color: 'bg-blue-600', label: 'Azul · pago' },
   { color: 'bg-orange-500', label: 'Naranja · mixta' },
   { color: 'bg-emerald-600', label: 'Verde · residentes' },
-  { color: 'bg-zinc-300', label: 'Blanco · gratis' },
   { color: 'bg-yellow-400', label: 'Amarillo · restringido' },
 ];
 

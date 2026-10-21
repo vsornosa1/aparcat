@@ -10,7 +10,7 @@ Parkflow combina varias señales legales y complementarias. El mapa arranca con 
 
 - **Garajes públicos:** plazas libres cuando el Ayuntamiento las publica. Si el dato es antiguo o no existe, se muestra «antiguo» o «sin datos», nunca «libre».
 - **Reportes de la comunidad:** «he dejado un hueco» o «zona llena», anónimos y con caducidad de 15 minutos.
-- **Zonas ORA:** zonas de aparcamiento en calle agrupadas por color: azul (pago), naranja (mixta), verde (residentes), blanca (gratis) y amarilla (restringida). El color identifica la tarifa; no es una predicción de plazas.
+- **Zonas ORA:** zonas de aparcamiento en calle agrupadas por color: azul (pago), naranja (mixta), verde (residentes) y amarilla (restringida). El color identifica la tarifa; no es una predicción de plazas.
 - **Predicción de aparcamiento regulado:** ocupación estimada por el Ayuntamiento para tramos de la zona centro, etiquetada como predicción y con su hora de consulta.
 - **Cámaras de tráfico:** solo su ubicación y un enlace al visor oficial. No se descargan ni se publican imágenes.
 

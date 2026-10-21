@@ -26,6 +26,7 @@ export async function loadOraZones(
         geom
       from ora_markings
       where geom && ST_MakeEnvelope(${bounds.minLng}, ${bounds.minLat}, ${bounds.maxLng}, ${bounds.maxLat}, 4326)
+        and color <> 'Blanco'
     ),
     zones as (
       select

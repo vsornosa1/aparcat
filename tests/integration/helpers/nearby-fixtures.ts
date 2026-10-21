@@ -38,12 +38,19 @@ export async function seedNearbyFixtures(sql: Sql): Promise<void> {
 
   await sql`
     insert into ora_markings (id, color, fetched_at, geom)
-    values (
-      'near-ora',
-      'Azul',
-      ${now},
-      ST_SetSRID(ST_MakeLine(ST_MakePoint(10.0005, 10.0002), ST_MakePoint(10.0012, 10.0002)), 4326)
-    )
+    values
+      (
+        'near-ora',
+        'Azul',
+        ${now},
+        ST_SetSRID(ST_MakeLine(ST_MakePoint(10.0005, 10.0002), ST_MakePoint(10.0012, 10.0002)), 4326)
+      ),
+      (
+        'near-ora-white',
+        'Blanco',
+        ${now},
+        ST_SetSRID(ST_MakeLine(ST_MakePoint(10.0006, 10.0003), ST_MakePoint(10.0011, 10.0003)), 4326)
+      )
   `;
 
   await sql`
