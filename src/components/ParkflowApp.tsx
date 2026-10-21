@@ -5,8 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MapResponse, NearbyResponse } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
 import { fetchMapData, fetchNearby, sendReport } from '@/lib/api-client';
+import { hasBasemap } from '@/lib/map-style';
+import { LayerControls } from './map/LayerControls';
 import { MapLegend } from './map/MapLegend';
-import { OriginPicker } from './parking/OriginPicker';
+import { DEFAULT_LAYERS, type MapLayerVisibility } from './map/layers';
+import { SearchBar } from './parking/SearchBar';
 import { RecommendationSheet } from './parking/RecommendationSheet';
 
 const ParkingMap = dynamic(() => import('./map/ParkingMap').then((module) => module.ParkingMap), {
@@ -27,6 +30,7 @@ export function ParkflowApp() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reportMessage, setReportMessage] = useState<string | null>(null);
   const [isReporting, setIsReporting] = useState(false);
+  const [layers, setLayers] = useState<MapLayerVisibility>(DEFAULT_LAYERS);
   const requestId = useRef(0);
 
   const loadMap = useCallback(async () => {
@@ -43,14 +47,16 @@ export function ParkflowApp() {
     void loadMap();
   }, [loadMap]);
 
-  const loadNearby = useCallback(async (coordinates: Coordinates) => {
+  const loadNearby = useCallback(async (coordinates: Coordinates, includeStreets: boolean) => {
     const currentRequest = ++requestId.current;
     setState('loading');
     setError(null);
     setSelectedId(null);
 
     try {
-      const data = await fetchNearby(coordinates.latitude, coordinates.longitude);
+      const data = await fetchNearby(coordinates.latitude, coordinates.longitude, {
+        includeStreets,
+      });
       if (currentRequest !== requestId.current) return;
 
       setNearby(data);
@@ -74,13 +80,17 @@ export function ParkflowApp() {
   useEffect(() => {
     if (!origin) return;
 
-    const timer = setTimeout(() => void loadNearby(origin), 250);
+    const timer = setTimeout(() => void loadNearby(origin, layers.streets), 250);
     return () => clearTimeout(timer);
-  }, [origin, loadNearby]);
+  }, [origin, layers.streets, loadNearby]);
 
   const handleOrigin = useCallback((coordinates: Coordinates) => {
     setOrigin(coordinates);
     setReportMessage(null);
+  }, []);
+
+  const toggleLayer = useCallback((layer: keyof MapLayerVisibility) => {
+    setLayers((current) => ({ ...current, [layer]: !current[layer] }));
   }, []);
 
   const handleReport = useCallback(
@@ -97,14 +107,14 @@ export function ParkflowApp() {
             ? 'Hueco reportado. Gracias por avisar.'
             : 'Zona marcada como llena. Gracias por avisar.',
         );
-        await Promise.all([loadMap(), loadNearby(origin)]);
+        await Promise.all([loadMap(), loadNearby(origin, layers.streets)]);
       } catch (caught) {
         setReportMessage(caught instanceof Error ? caught.message : 'No se pudo enviar el reporte');
       } finally {
         setIsReporting(false);
       }
     },
-    [origin, loadMap, loadNearby],
+    [origin, layers.streets, loadMap, loadNearby],
   );
 
   const selected = useMemo(
@@ -112,19 +122,45 @@ export function ParkflowApp() {
     [nearby, selectedId],
   );
 
+  const counts = mapData
+    ? {
+        garages: mapData.meta.facilities,
+        streets: mapData.meta.segments,
+        cameras: mapData.meta.cameras,
+        reports: mapData.meta.reports,
+      }
+    : undefined;
+
   return (
     <main className="flex min-h-dvh flex-col lg:h-dvh lg:flex-row">
       <section
         className="relative h-[52dvh] min-h-[320px] shrink-0 lg:h-auto lg:flex-1"
         aria-label="Mapa y búsqueda de aparcamiento"
       >
-        <ParkingMap data={mapData} origin={origin} selected={selected} onOrigin={handleOrigin} />
+        <ParkingMap
+          data={mapData}
+          origin={origin}
+          selected={selected}
+          layers={layers}
+          onOrigin={handleOrigin}
+        />
 
-        <div className="absolute inset-x-3 top-3 z-10 sm:w-80">
-          <OriginPicker origin={origin} onOrigin={handleOrigin} />
+        <div className="absolute inset-x-3 top-3 z-10 flex flex-col gap-2 sm:w-96">
+          <SearchBar origin={origin} onOrigin={handleOrigin} />
+          <LayerControls layers={layers} counts={counts} onToggle={toggleLayer} />
+          {!hasBasemap && (
+            <p
+              role="status"
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-800 shadow-sm"
+            >
+              Añade <code className="font-mono">NEXT_PUBLIC_MAPTILER_KEY</code> al{' '}
+              <code className="font-mono">.env.local</code> para ver el mapa base. Las capas de
+              datos siguen funcionando.
+            </p>
+          )}
         </div>
 
-        <MapLegend />
+        <MapLegend layers={layers} />
       </section>
 
       <aside className="flex min-h-0 flex-1 flex-col border-t border-zinc-200 bg-white lg:h-full lg:w-[420px] lg:flex-none lg:border-l lg:border-t-0">
@@ -134,9 +170,10 @@ export function ParkflowApp() {
           state={state}
           error={error}
           selectedId={selectedId}
+          streetsEnabled={layers.streets}
           onSelect={setSelectedId}
           onRetry={() => {
-            if (origin) void loadNearby(origin);
+            if (origin) void loadNearby(origin, layers.streets);
           }}
           onReport={handleReport}
           isReporting={isReporting}

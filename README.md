@@ -6,11 +6,11 @@ Webapp para encontrar aparcamiento libre cerca de ti en Valencia sin dar vueltas
 
 ## Cómo funciona
 
-Parkflow combina tres señales legales y complementarias:
+Parkflow combina tres señales legales y complementarias. El mapa arranca con las dos primeras; la predicción de calles y las cámaras se activan desde «Capas del mapa»:
 
-- **Garajes públicos:** plazas libres en vivo cuando el Ayuntamiento las publica. Si no hay dato, se muestra «sin datos», nunca «libre».
-- **Predicción de aparcamiento regulado:** ocupación estimada por el Ayuntamiento para tramos de la zona centro, etiquetada como predicción y con su hora de consulta.
+- **Garajes públicos:** plazas libres cuando el Ayuntamiento las publica. Si el dato es antiguo o no existe, se muestra «antiguo» o «sin datos», nunca «libre».
 - **Reportes de la comunidad:** «he dejado un hueco» o «zona llena», anónimos y con caducidad de 15 minutos.
+- **Predicción de aparcamiento regulado:** ocupación estimada por el Ayuntamiento para tramos de la zona centro, etiquetada como predicción y con su hora de consulta.
 - **Cámaras de tráfico:** solo su ubicación y un enlace al visor oficial. No se descargan ni se publican imágenes.
 
 Cada recomendación muestra su antigüedad y su confianza. La app no reserva ni garantiza plazas.
@@ -20,7 +20,7 @@ Cada recomendación muestra su antigüedad y su confianza. La app no reserva ni 
 Los endpoints, campos, licencias y limitaciones están verificados en [docs/research/valencia-data-sources.md](docs/research/valencia-data-sources.md).
 
 - Datos del Ajuntament de València: **CC BY 4.0**.
-- Mapas: **OpenStreetMap**.
+- Mapas: **MapTiler** con datos de **OpenStreetMap**.
 - **No se usan imágenes de cámaras de tráfico.** Su difusión está prohibida sin autorización escrita; la solicitud está preparada en [docs/legal/camera-authorization-request.md](docs/legal/camera-authorization-request.md).
 
 ## Stack
@@ -84,9 +84,31 @@ npm run probe:sources -- --export-cameras=docs/legal/camaras-valencia.csv
 
 Los errores usan siempre `{ "error": { "code": "...", "message": "..." } }`. Los reportes se limitan por dispositivo e IP y solo guardan un hash con sal (`REPORT_SALT`).
 
-## Mapa
+## Mapa (MapTiler)
 
-`npm install` ejecuta `scripts/copy-maplibre-worker.mjs`, que copia el worker de MapLibre a `public/`. En desarrollo se usa OpenStreetMap; para producción define `NEXT_PUBLIC_MAP_STYLE_URL` con un estilo de un proveedor de tiles o autohospedado. El uso intensivo de los tiles públicos de OpenStreetMap no está permitido.
+`npm install` ejecuta `scripts/copy-maplibre-worker.mjs`, que copia el worker de MapLibre a `public/`.
+
+Crea una API key en [MapTiler Cloud](https://cloud.maptiler.com/account/keys/) y configúrala en `.env.local`:
+
+```bash
+NEXT_PUBLIC_MAPTILER_KEY=tu_key
+NEXT_PUBLIC_MAPTILER_STYLE=streets-v4   # opcional
+```
+
+En la configuración de la key:
+
+- **Allowed HTTP Origins:** `localhost`, `127.0.0.1` y tu dominio de producción, sin protocolo ni puerto (`parkflow.vercel.app`, `tudominio.com`).
+- **Allowed user-agent header:** déjalo **vacío** para la web. Los navegadores no permiten fijar un User-Agent propio; ese campo es para apps nativas o peticiones de servidor.
+
+La búsqueda usa MapTiler Geocoding limitado al área de Valencia. Si no hay key, el mapa muestra un fondo neutro con las capas de datos y la búsqueda cae al endpoint local de calles.
+
+Para Docker, la key se inyecta en tiempo de build porque `NEXT_PUBLIC_*` se compila en el bundle:
+
+```bash
+# PowerShell: lee la key de .env.local y reconstruye sin imprimirla
+$env:NEXT_PUBLIC_MAPTILER_KEY = (Get-Content .env.local | Where-Object { $_ -match '^NEXT_PUBLIC_MAPTILER_KEY=' }) -replace '^NEXT_PUBLIC_MAPTILER_KEY=', ''
+docker compose up -d --build
+```
 
 ## Estructura
 

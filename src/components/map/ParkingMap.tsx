@@ -10,35 +10,21 @@ import {
   type GeoJSONSource,
   type MapLayerMouseEvent,
   type MapMouseEvent,
-  type StyleSpecification,
 } from 'maplibre-gl';
 import { useEffect, useRef, useState } from 'react';
 import type {
   Candidate,
   MapCameraProperties,
   MapFacilityProperties,
+  MapReportProperties,
   MapResponse,
+  MapSegmentProperties,
 } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
+import { getMapStyle } from '@/lib/map-style';
+import type { MapLayerVisibility } from './layers';
 
 const CENTER = { latitude: 39.4699, longitude: -0.3763 };
-const MAP_STYLE_URL = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
-
-const OSM_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors',
-    },
-  },
-  layers: [
-    { id: 'background', type: 'background', paint: { 'background-color': '#f4f4f5' } },
-    { id: 'osm', type: 'raster', source: 'osm' },
-  ],
-};
 
 const SEGMENT_COLOR: ExpressionSpecification = [
   'case',
@@ -70,14 +56,24 @@ const REPORT_COLOR: ExpressionSpecification = [
   '#f97316',
 ];
 
+const INTERACTIVE_LAYERS = [
+  'facilities-circle',
+  'facilities-icon',
+  'cameras-circle',
+  'cameras-icon',
+  'reports-circle',
+  'segments-line',
+];
+
 interface ParkingMapProps {
   data: MapResponse | null;
   origin: Coordinates | null;
   selected: Candidate | null;
+  layers: MapLayerVisibility;
   onOrigin: (origin: Coordinates) => void;
 }
 
-export function ParkingMap({ data, origin, selected, onOrigin }: ParkingMapProps) {
+export function ParkingMap({ data, origin, selected, layers, onOrigin }: ParkingMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const popupRef = useRef<Popup | null>(null);
@@ -99,7 +95,7 @@ export function ParkingMap({ data, origin, selected, onOrigin }: ParkingMapProps
 
       const map = new MapLibreMap({
         container,
-        style: MAP_STYLE_URL ? MAP_STYLE_URL : OSM_STYLE,
+        style: getMapStyle(),
         center: [CENTER.longitude, CENTER.latitude],
         zoom: 13,
         attributionControl: { compact: true },
@@ -107,50 +103,49 @@ export function ParkingMap({ data, origin, selected, onOrigin }: ParkingMapProps
 
       mapInstance = map;
       mapRef.current = map;
-
       map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right');
+
+      const showPopup = (event: MapLayerMouseEvent, content: HTMLElement) => {
+        popupRef.current?.remove();
+        popupRef.current = new Popup({ offset: 12, closeButton: false })
+          .setLngLat(event.lngLat)
+          .setDOMContent(content)
+          .addTo(map);
+      };
 
       const addLayers = () => {
         if (map.getSource('segments')) return;
+
         map.addSource('segments', { type: 'geojson', data: emptyCollection() });
+        map.addSource('facilities', { type: 'geojson', data: emptyCollection() });
+        map.addSource('cameras', { type: 'geojson', data: emptyCollection() });
+        map.addSource('reports', { type: 'geojson', data: emptyCollection() });
+        map.addSource('origin', { type: 'geojson', data: emptyCollection() });
+        map.addSource('selected', { type: 'geojson', data: emptyCollection() });
+
         map.addLayer({
           id: 'segments-line',
           type: 'line',
           source: 'segments',
           paint: {
             'line-color': SEGMENT_COLOR,
-            'line-width': 4,
+            'line-width': 5,
             'line-opacity': 0.9,
           },
         });
 
-        map.addSource('facilities', { type: 'geojson', data: emptyCollection() });
         map.addLayer({
           id: 'facilities-circle',
           type: 'circle',
           source: 'facilities',
           paint: {
-            'circle-radius': 7,
+            'circle-radius': 10,
             'circle-color': FACILITY_COLOR,
             'circle-stroke-width': 2,
             'circle-stroke-color': '#ffffff',
           },
         });
 
-        map.addSource('cameras', { type: 'geojson', data: emptyCollection() });
-        map.addLayer({
-          id: 'cameras-circle',
-          type: 'circle',
-          source: 'cameras',
-          paint: {
-            'circle-radius': 5,
-            'circle-color': '#475569',
-            'circle-stroke-width': 1.5,
-            'circle-stroke-color': '#ffffff',
-          },
-        });
-
-        map.addSource('reports', { type: 'geojson', data: emptyCollection() });
         map.addLayer({
           id: 'reports-circle',
           type: 'circle',
@@ -163,7 +158,19 @@ export function ParkingMap({ data, origin, selected, onOrigin }: ParkingMapProps
           },
         });
 
-        map.addSource('origin', { type: 'geojson', data: emptyCollection() });
+        map.addLayer({
+          id: 'cameras-circle',
+          type: 'circle',
+          source: 'cameras',
+          minzoom: 14,
+          paint: {
+            'circle-radius': 8,
+            'circle-color': '#475569',
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+          },
+        });
+
         map.addLayer({
           id: 'origin-halo',
           type: 'circle',
@@ -186,80 +193,90 @@ export function ParkingMap({ data, origin, selected, onOrigin }: ParkingMapProps
           },
         });
 
-        map.addSource('selected', { type: 'geojson', data: emptyCollection() });
         map.addLayer({
           id: 'selected-ring',
           type: 'circle',
           source: 'selected',
           paint: {
-            'circle-radius': 14,
+            'circle-radius': 16,
             'circle-color': 'rgba(0,0,0,0)',
             'circle-stroke-width': 3,
             'circle-stroke-color': '#0f172a',
           },
         });
 
-        map.on('click', 'facilities-circle', (event: MapLayerMouseEvent) => {
-          const feature = event.features?.[0];
-          if (!feature) return;
+        if (!map.hasImage('garage-p'))
+          map.addImage('garage-p', createGarageIcon(), { pixelRatio: 2 });
+        if (!map.hasImage('camera-icon'))
+          map.addImage('camera-icon', createCameraIcon(), { pixelRatio: 2 });
 
-          const properties = feature.properties as unknown as MapFacilityProperties;
-          const content = document.createElement('div');
-          const title = document.createElement('strong');
-          title.textContent = properties.name;
-          const detail = document.createElement('div');
-          detail.textContent =
-            properties.availability === null
-              ? 'Sin datos recientes'
-              : `${Math.round(properties.availability * 100)}% de plazas libres`;
-
-          content.append(title, detail);
-          popupRef.current?.remove();
-          popupRef.current = new Popup({ offset: 12, closeButton: false })
-            .setLngLat(event.lngLat)
-            .setDOMContent(content)
-            .addTo(map);
+        map.addLayer({
+          id: 'facilities-icon',
+          type: 'symbol',
+          source: 'facilities',
+          layout: {
+            'icon-image': 'garage-p',
+            'icon-size': 0.5,
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+          },
         });
 
-        map.on('click', 'cameras-circle', (event: MapLayerMouseEvent) => {
+        map.addLayer({
+          id: 'cameras-icon',
+          type: 'symbol',
+          source: 'cameras',
+          minzoom: 14,
+          layout: {
+            'icon-image': 'camera-icon',
+            'icon-size': 0.5,
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+          },
+        });
+
+        for (const layer of ['facilities-circle', 'facilities-icon']) {
+          map.on('click', layer, (event: MapLayerMouseEvent) => {
+            const feature = event.features?.[0];
+            if (!feature) return;
+            showPopup(event, facilityPopup(feature.properties as unknown as MapFacilityProperties));
+          });
+        }
+
+        for (const layer of ['cameras-circle', 'cameras-icon']) {
+          map.on('click', layer, (event: MapLayerMouseEvent) => {
+            const feature = event.features?.[0];
+            if (!feature) return;
+            showPopup(event, cameraPopup(feature.properties as unknown as MapCameraProperties));
+          });
+        }
+
+        map.on('click', 'reports-circle', (event: MapLayerMouseEvent) => {
           const feature = event.features?.[0];
           if (!feature) return;
+          showPopup(event, reportPopup(feature.properties as unknown as MapReportProperties));
+        });
 
-          const properties = feature.properties as unknown as MapCameraProperties;
-          const content = document.createElement('div');
-          const title = document.createElement('strong');
-          title.textContent = properties.description ?? 'Cámara de tráfico';
-          const detail = document.createElement('div');
-          detail.textContent = 'Solo ubicación · sin imágenes';
-          const link = document.createElement('a');
-          link.href = properties.url;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = 'Ver en el visor oficial';
-          content.append(title, detail, link);
-
-          popupRef.current?.remove();
-          popupRef.current = new Popup({ offset: 12, closeButton: false })
-            .setLngLat(event.lngLat)
-            .setDOMContent(content)
-            .addTo(map);
+        map.on('click', 'segments-line', (event: MapLayerMouseEvent) => {
+          const feature = event.features?.[0];
+          if (!feature) return;
+          showPopup(event, segmentPopup(feature.properties as unknown as MapSegmentProperties));
         });
 
         map.on('click', (event: MapMouseEvent) => {
-          const facilities = map.queryRenderedFeatures(event.point, {
-            layers: ['facilities-circle', 'cameras-circle'],
-          });
-          if (facilities.length > 0) return;
-
+          const hits = map.queryRenderedFeatures(event.point, { layers: INTERACTIVE_LAYERS });
+          if (hits.length > 0) return;
           onOriginRef.current({ latitude: event.lngLat.lat, longitude: event.lngLat.lng });
         });
 
-        map.on('mouseenter', 'facilities-circle', () => {
-          map.getCanvas().style.cursor = 'pointer';
-        });
-        map.on('mouseleave', 'facilities-circle', () => {
-          map.getCanvas().style.cursor = '';
-        });
+        for (const layer of INTERACTIVE_LAYERS) {
+          map.on('mouseenter', layer, () => {
+            map.getCanvas().style.cursor = 'pointer';
+          });
+          map.on('mouseleave', layer, () => {
+            map.getCanvas().style.cursor = '';
+          });
+        }
 
         setReady(true);
       };
@@ -305,6 +322,19 @@ export function ParkingMap({ data, origin, selected, onOrigin }: ParkingMapProps
     const map = mapRef.current;
     if (!map) return;
 
+    setLayerVisibility(map, 'segments-line', layers.streets);
+    setLayerVisibility(map, 'facilities-circle', layers.garages);
+    setLayerVisibility(map, 'facilities-icon', layers.garages);
+    setLayerVisibility(map, 'reports-circle', layers.reports);
+    setLayerVisibility(map, 'cameras-circle', layers.cameras);
+    setLayerVisibility(map, 'cameras-icon', layers.cameras);
+  }, [ready, layers]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const map = mapRef.current;
+    if (!map) return;
+
     (map.getSource('origin') as GeoJSONSource | undefined)?.setData(
       origin ? pointCollection(origin) : emptyCollection(),
     );
@@ -336,11 +366,17 @@ export function ParkingMap({ data, origin, selected, onOrigin }: ParkingMapProps
         aria-label="Mapa de aparcamiento"
       />
       <p className="sr-only">
-        Toca el mapa para elegir el punto desde el que buscar. También puedes usar el buscador de
-        calles o el botón de ubicación.
+        Toca el mapa para elegir el origen. Usa el buscador para calles y direcciones, o el botón de
+        ubicación.
       </p>
     </div>
   );
+}
+
+function setLayerVisibility(map: MapLibreMap, layerId: string, visible: boolean): void {
+  if (map.getLayer(layerId)) {
+    map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+  }
 }
 
 function emptyCollection() {
@@ -361,4 +397,132 @@ function pointCollection(point: Coordinates) {
       },
     ],
   };
+}
+
+function createGarageIcon(): ImageData {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('No se pudo crear el icono de garaje');
+
+  context.fillStyle = '#ffffff';
+  context.font = 'bold 42px Arial, sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText('P', size / 2, size / 2 + 2);
+
+  return context.getImageData(0, 0, size, size);
+}
+
+function createCameraIcon(): ImageData {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('No se pudo crear el icono de cámara');
+
+  context.fillStyle = '#ffffff';
+  context.fillRect(14, 24, 36, 24);
+  context.fillRect(24, 16, 14, 8);
+  context.beginPath();
+  context.arc(32, 36, 7, 0, Math.PI * 2);
+  context.fillStyle = '#475569';
+  context.fill();
+
+  return context.getImageData(0, 0, size, size);
+}
+
+function facilityPopup(properties: MapFacilityProperties): HTMLElement {
+  const root = document.createElement('div');
+  root.className = 'space-y-1 text-sm';
+
+  const title = document.createElement('strong');
+  title.textContent = properties.name;
+
+  const type = document.createElement('p');
+  type.className = 'text-xs text-zinc-500';
+  type.textContent = 'Garaje público · dato municipal';
+
+  const availability = document.createElement('p');
+  availability.className = 'font-medium text-zinc-800';
+  availability.textContent =
+    properties.availability === null
+      ? 'Sin datos recientes de plazas libres'
+      : `${Math.round(properties.availability * 100)}% de plazas libres`;
+
+  const detail = document.createElement('p');
+  detail.className = 'text-xs text-zinc-500';
+  if (properties.freeSpaces !== null && properties.capacity !== null) {
+    detail.textContent = `${properties.freeSpaces} de ${properties.capacity} plazas libres · `;
+  }
+  detail.textContent +=
+    properties.ageMinutes === null
+      ? 'sin hora de actualización'
+      : `actualizado hace ${properties.ageMinutes} min`;
+
+  root.append(title, type, availability, detail);
+  return root;
+}
+
+function segmentPopup(properties: MapSegmentProperties): HTMLElement {
+  const root = document.createElement('div');
+  root.className = 'space-y-1 text-sm';
+
+  const title = document.createElement('strong');
+  title.textContent = properties.streetName;
+
+  const type = document.createElement('p');
+  type.className = 'text-xs text-zinc-500';
+  type.textContent = 'Calle con aparcamiento regulado · predicción municipal';
+
+  const availability = document.createElement('p');
+  availability.className = 'font-medium text-zinc-800';
+  availability.textContent = `${Math.round(properties.availability * 100)}% libre previsto (próxima hora)`;
+
+  const detail = document.createElement('p');
+  detail.className = 'text-xs text-zinc-500';
+  detail.textContent = `Consultada hace ${properties.ageMinutes} min. Puede incluir partes sin plazas. No es una reserva.`;
+
+  root.append(title, type, availability, detail);
+  return root;
+}
+
+function cameraPopup(properties: MapCameraProperties): HTMLElement {
+  const root = document.createElement('div');
+  root.className = 'space-y-1 text-sm';
+
+  const title = document.createElement('strong');
+  title.textContent = properties.description ?? 'Cámara de tráfico';
+
+  const type = document.createElement('p');
+  type.className = 'text-xs text-zinc-500';
+  type.textContent = 'Solo ubicación · sin imágenes en Parkflow';
+
+  const link = document.createElement('a');
+  link.href = properties.url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.className = 'inline-block text-xs font-medium text-emerald-700 underline underline-offset-2';
+  link.textContent = 'Abrir el visor oficial';
+
+  root.append(title, type, link);
+  return root;
+}
+
+function reportPopup(properties: MapReportProperties): HTMLElement {
+  const root = document.createElement('div');
+  root.className = 'space-y-1 text-sm';
+
+  const title = document.createElement('strong');
+  title.textContent = properties.kind === 'spot_free' ? 'Hueco reportado' : 'Zona llena';
+
+  const detail = document.createElement('p');
+  detail.className = 'text-xs text-zinc-500';
+  detail.textContent = `Reporte de la comunidad · hace ${properties.ageMinutes} min. Caduca a los 15 minutos.`;
+
+  root.append(title, detail);
+  return root;
 }

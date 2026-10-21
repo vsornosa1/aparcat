@@ -12,9 +12,15 @@ const DOTS = {
   unknown: 'bg-zinc-400',
 } as const;
 
-export function AvailabilityBadge({ availability }: { availability: number | null }) {
+export function AvailabilityBadge({
+  availability,
+  stale = false,
+}: {
+  availability: number | null;
+  stale?: boolean;
+}) {
   const tone =
-    availability === null
+    availability === null || stale
       ? 'unknown'
       : availability >= 0.6
         ? 'high'
@@ -22,12 +28,17 @@ export function AvailabilityBadge({ availability }: { availability: number | nul
           ? 'medium'
           : 'low';
 
+  const label =
+    availability === null
+      ? 'Sin datos'
+      : `${Math.round(availability * 100)}% libre${stale ? ' · antiguo' : ''}`;
+
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${TONES[tone]}`}
     >
       <span aria-hidden="true" className={`size-1.5 rounded-full ${DOTS[tone]}`} />
-      {availability === null ? 'Sin datos' : `${Math.round(availability * 100)}% libre`}
+      {label}
     </span>
   );
 }

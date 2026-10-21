@@ -13,6 +13,7 @@ export interface NearbyOptions {
   radiusMeters: number;
   horizonHours: Horizon;
   now: Date;
+  includeStreets?: boolean;
 }
 
 interface FacilityRow {
@@ -46,6 +47,7 @@ const REPORT_TTL_MINUTES = 15;
 export async function findNearbyCandidates(options: NearbyOptions): Promise<NearbyResponse> {
   const sql = getSql();
   const origin = { latitude: options.latitude, longitude: options.longitude };
+  const includeStreets = options.includeStreets ?? true;
 
   const [facilityRows, segmentRows, reportCountRow] = await Promise.all([
     sql<FacilityRow[]>`
@@ -78,7 +80,8 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
       order by distance_meters
       limit 100
     `,
-    sql<SegmentRow[]>`
+    includeStreets
+      ? sql<SegmentRow[]>`
       with origin as (
         select ST_SetSRID(ST_MakePoint(${options.longitude}, ${options.latitude}), 4326) as geom
       )
@@ -109,7 +112,8 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
       where ST_DWithin(s.geom::geography, o.geom::geography, ${options.radiusMeters})
       order by distance_meters
       limit 300
-    `,
+    `
+      : Promise.resolve([] as SegmentRow[]),
     sql<{ count: number }[]>`
       with origin as (
         select ST_SetSRID(ST_MakePoint(${options.longitude}, ${options.latitude}), 4326) as geom

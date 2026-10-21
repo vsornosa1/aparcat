@@ -96,6 +96,20 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     expect(response.meta.facilities).toBe(2);
   });
 
+  it('omite las calles cuando la capa está desactivada', async () => {
+    const response = await findNearbyCandidates({
+      latitude: TEST_ORIGIN.latitude,
+      longitude: TEST_ORIGIN.longitude,
+      radiusMeters: 800,
+      horizonHours: 1,
+      includeStreets: false,
+      now: new Date(),
+    });
+
+    expect(response.meta.streetSegments).toBe(0);
+    expect(response.candidates.every((candidate) => candidate.kind === 'garage')).toBe(true);
+  });
+
   it('responde 400 si faltan coordenadas', async () => {
     const { GET } = await import('@/app/api/parking/nearby/route');
     const response = await GET(new Request('http://localhost/api/parking/nearby?lat=10'));

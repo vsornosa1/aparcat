@@ -28,7 +28,7 @@ export const DEFAULT_MAP_BOUNDS: MapBounds = {
 const MAX_SEGMENTS = 500;
 const MAX_FACILITIES = 100;
 const MAX_REPORTS = 200;
-const MAX_CAMERAS = 300;
+const MAX_CAMERAS = 1_000;
 
 export class InvalidBoundsError extends Error {
   constructor(message: string) {
@@ -159,6 +159,7 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
           freshness,
           confidence: confidenceFor(freshness, availability),
           observedAt: row.fetched_at.toISOString(),
+          ageMinutes: ageMinutes(row.fetched_at, now) ?? 0,
         },
       };
     }),
@@ -183,6 +184,7 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
           freshness,
           confidence: confidenceFor(freshness, availability),
           observedAt: row.source_updated_at?.toISOString() ?? null,
+          ageMinutes: ageMinutes(row.source_updated_at, now),
         },
       };
     }),

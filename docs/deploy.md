@@ -52,7 +52,12 @@ docker compose down -v
 
 ## Mapas en producción
 
-OpenStreetMap solo se usa en desarrollo. Para producción, configura `NEXT_PUBLIC_MAP_STYLE_URL` con MapTiler, Protomaps o una instancia autohospedada, y revisa sus condiciones de uso y atribución.
+OpenStreetMap solo aparece como origen de datos dentro del estilo de MapTiler; no se usan sus teselas públicas. Configura `NEXT_PUBLIC_MAPTILER_KEY` y, opcionalmente, `NEXT_PUBLIC_MAPTILER_STYLE` (`streets-v4`, `dataviz-v2`, `basic-v2`...). En MapTiler Cloud:
+
+- **Allowed HTTP Origins:** `localhost`, `127.0.0.1` y el dominio de producción, sin protocolo ni puerto.
+- **Allowed user-agent header:** vacío para la web. Para una key de servidor, crea otra con `parkflow-server` y envía ese User-Agent.
+
+La clave se compila en el bundle (`NEXT_PUBLIC_*`). En Docker pásala como build arg o exporta la variable antes de `docker compose up --build`. La CSP de `next.config.ts` permite `api.maptiler.com`; si cambias de proveedor, actualiza `img-src` y `connect-src`.
 
 ## Operación
 

@@ -53,11 +53,11 @@ export default function PrivacidadPage() {
       <section className="space-y-2">
         <h2 className="text-base font-semibold text-zinc-900">Mapas y datos municipales</h2>
         <p>
-          El mapa usa MapLibre con teselas de OpenStreetMap, que recibe la petición de tu navegador
-          con la información técnica habitual. Los datos de aparcamiento proceden del Ajuntament de
-          València y se publican con licencia CC BY 4.0. Las cámaras de tráfico solo se muestran
-          como ubicación con un enlace al visor oficial: Parkflow no descarga ni publica sus
-          imágenes.
+          El mapa usa MapLibre con MapTiler y datos de OpenStreetMap, que reciben la petición de tu
+          navegador con la información técnica habitual. Los datos de aparcamiento proceden del
+          Ajuntament de València y se publican con licencia CC BY 4.0. Las cámaras de tráfico solo
+          se muestran como ubicación con un enlace al visor oficial: Parkflow no descarga ni publica
+          sus imágenes.
         </p>
       </section>
 

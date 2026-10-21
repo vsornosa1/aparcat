@@ -41,12 +41,13 @@ export function fetchMapData(): Promise<MapResponse> {
 export function fetchNearby(
   latitude: number,
   longitude: number,
-  radiusMeters = 800,
+  options: { radiusMeters?: number; includeStreets?: boolean } = {},
 ): Promise<NearbyResponse> {
   const params = new URLSearchParams({
     lat: String(latitude),
     lng: String(longitude),
-    radius: String(radiusMeters),
+    radius: String(options.radiusMeters ?? 800),
+    includeStreets: options.includeStreets === false ? '0' : '1',
   });
 
   return request<NearbyResponse>(`/api/parking/nearby?${params.toString()}`);

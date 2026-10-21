@@ -15,6 +15,7 @@ interface RecommendationSheetProps {
   state: LoadState;
   error: string | null;
   selectedId: string | null;
+  streetsEnabled: boolean;
   onSelect: (id: string) => void;
   onRetry: () => void;
   onReport: (kind: 'spot_free' | 'area_full') => void;
@@ -28,6 +29,7 @@ export function RecommendationSheet({
   state,
   error,
   selectedId,
+  streetsEnabled,
   onSelect,
   onRetry,
   onReport,
@@ -44,7 +46,7 @@ export function RecommendationSheet({
           </span>
         </div>
         <p className="mt-0.5 text-xs text-zinc-500">
-          Aparcamiento con datos abiertos y reportes de la comunidad.
+          Garajes y reportes de la comunidad. Las calles son una predicción opcional.
         </p>
       </header>
 
@@ -74,7 +76,7 @@ export function RecommendationSheet({
                 </ol>
               </>
             ) : (
-              <EmptyState />
+              <EmptyState streetsEnabled={streetsEnabled} />
             )}
 
             <ReportButtons onReport={onReport} isReporting={isReporting} message={reportMessage} />
@@ -96,7 +98,7 @@ export function RecommendationSheet({
           >
             Ajuntament de València
           </a>{' '}
-          (CC BY 4.0) · Mapas: OpenStreetMap
+          (CC BY 4.0) · Mapa: MapTiler © OpenStreetMap
         </p>
         <nav aria-label="Información legal" className="flex gap-3 text-[11px] text-zinc-500">
           <a href="/privacidad" className="hover:text-zinc-700">
@@ -114,10 +116,12 @@ export function RecommendationSheet({
 function IdleState() {
   return (
     <div className="rounded-xl border border-dashed border-zinc-300 p-4">
-      <p className="text-sm font-medium text-zinc-800">Elige dónde buscar</p>
+      <p className="text-sm font-medium text-zinc-800">Encuentra aparcamiento libre ahora</p>
       <p className="mt-1 text-xs leading-snug text-zinc-600">
-        Pulsa «Aparcar cerca de mí», toca el mapa o busca una calle. Verás las mejores opciones a
-        menos de 800 metros, con su antigüedad y su confianza.
+        Busca una dirección o usa tu ubicación. El mapa arranca con los{' '}
+        <strong>garajes públicos</strong> (plazas libres publicadas por el Ayuntamiento) y los{' '}
+        <strong>reportes</strong> de otros conductores. Si quieres la estimación municipal de las
+        calles, activa «Calles con predicción» en Capas.
       </p>
     </div>
   );
@@ -151,13 +155,14 @@ function ErrorState({ message, onRetry }: { message: string | null; onRetry: () 
   );
 }
 
-function EmptyState() {
+function EmptyState({ streetsEnabled }: { streetsEnabled: boolean }) {
   return (
     <div role="status" className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
       <p className="text-sm font-medium text-zinc-800">Sin datos en este radio</p>
       <p className="mt-1 text-xs leading-snug text-zinc-600">
-        Toca otra zona del mapa o busca una calle cercana. La cobertura de predicción municipal se
-        concentra en el centro de Valencia.
+        {streetsEnabled
+          ? 'Toca otra zona del mapa o busca otro lugar. La predicción municipal se concentra en el centro de Valencia.'
+          : 'No hay garajes con datos en este radio. Activa «Calles con predicción» en Capas para ver la estimación municipal, o toca otra zona.'}
       </p>
     </div>
   );
@@ -168,6 +173,12 @@ function Summary({ nearby }: { nearby: NearbyResponse }) {
     hour: '2-digit',
     minute: '2-digit',
   });
+  const garages = `${nearby.meta.facilities} ${nearby.meta.facilities === 1 ? 'garaje' : 'garajes'}`;
+  const reports = `${nearby.meta.reports} ${nearby.meta.reports === 1 ? 'reporte' : 'reportes'}`;
+  const streets =
+    nearby.meta.streetSegments > 0
+      ? ` · ${nearby.meta.streetSegments} ${nearby.meta.streetSegments === 1 ? 'calle' : 'calles'}`
+      : '';
 
   return (
     <div
@@ -175,8 +186,8 @@ function Summary({ nearby }: { nearby: NearbyResponse }) {
       className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500"
     >
       <span>
-        {nearby.meta.facilities} garajes · {nearby.meta.streetSegments} calles ·{' '}
-        {nearby.meta.reports} reportes
+        {garages} · {reports}
+        {streets}
       </span>
       <span>datos de las {time}</span>
     </div>
@@ -216,11 +227,16 @@ function CandidateCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <h2 className="truncate text-sm font-semibold text-zinc-900">{candidate.name}</h2>
-              <AvailabilityBadge availability={candidate.availability} />
+              <AvailabilityBadge
+                availability={candidate.availability}
+                stale={candidate.freshness === 'stale'}
+              />
             </div>
             <p className="mt-0.5 text-xs text-zinc-500">
-              {candidate.kind === 'garage' ? 'Garaje público' : 'Aparcamiento regulado'} · a{' '}
-              {candidate.walkingMinutes} min andando
+              {candidate.kind === 'garage'
+                ? 'Garaje público · plazas libres'
+                : 'Calle · predicción municipal 1 h'}{' '}
+              · a {candidate.walkingMinutes} min andando
             </p>
             <p className="mt-1 text-xs leading-snug text-zinc-600">{candidate.reason}</p>
             <div className="mt-1.5 flex items-center justify-between gap-2">

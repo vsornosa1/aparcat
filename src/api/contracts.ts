@@ -20,6 +20,10 @@ export const nearbyQuerySchema = z.object({
     .int()
     .default(1)
     .refine((value) => HORIZONS.includes(value as Horizon), 'Horizonte no soportado'),
+  includeStreets: z
+    .enum(['0', '1'])
+    .default('1')
+    .transform((value) => value === '1'),
 });
 
 export const candidateSchema = z.object({
@@ -116,6 +120,7 @@ export interface MapSegmentProperties {
   freshness: Freshness;
   confidence: Confidence;
   observedAt: string;
+  ageMinutes: number;
 }
 
 export interface MapFacilityProperties {
@@ -128,6 +133,7 @@ export interface MapFacilityProperties {
   freshness: Freshness;
   confidence: Confidence;
   observedAt: string | null;
+  ageMinutes: number | null;
 }
 
 export interface MapReportProperties {

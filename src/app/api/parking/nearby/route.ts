@@ -11,6 +11,7 @@ export async function GET(request: Request): Promise<Response> {
     lng: params.get('lng') ?? undefined,
     radius: params.get('radius') ?? undefined,
     horizon: params.get('horizon') ?? undefined,
+    includeStreets: params.get('includeStreets') ?? undefined,
   });
 
   if (!parsed.success) {
@@ -23,6 +24,7 @@ export async function GET(request: Request): Promise<Response> {
       longitude: parsed.data.lng,
       radiusMeters: parsed.data.radius,
       horizonHours: parsed.data.horizon as Horizon,
+      includeStreets: parsed.data.includeStreets,
       now: new Date(),
     });
 
