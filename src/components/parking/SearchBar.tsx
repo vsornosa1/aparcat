@@ -117,7 +117,7 @@ export function SearchBar({ origin, onOrigin }: SearchBarProps) {
       <p
         role="status"
         aria-live="polite"
-        className="px-3 pb-2 text-[11px] leading-snug text-zinc-500"
+        className={`px-3 pb-2 text-[11px] leading-snug text-zinc-500 ${message ? '' : 'hidden sm:block'}`}
       >
         {message ??
           (origin

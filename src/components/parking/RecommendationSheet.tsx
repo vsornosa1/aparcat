@@ -39,19 +39,19 @@ export function RecommendationSheet({
 }: RecommendationSheetProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="border-b border-zinc-200 px-4 py-2.5">
+      <header className="border-b border-zinc-200 px-3 py-2 sm:px-4 sm:py-2.5">
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-semibold tracking-tight text-zinc-900">Parkflow</h1>
           <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
             Valencia
           </span>
         </div>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 hidden text-xs text-zinc-500 sm:block">
           Garajes y reportes de la comunidad. Las calles son una predicción opcional.
         </p>
       </header>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-3.5">
+      <div className="flex-1 space-y-3 overflow-y-auto p-3 sm:p-3.5">
         {!origin && <IdleState />}
 
         {origin && state === 'loading' && <LoadingState />}
@@ -85,7 +85,7 @@ export function RecommendationSheet({
         )}
       </div>
 
-      <footer className="border-t border-zinc-200 px-4 py-2 text-[10px] leading-relaxed text-zinc-500">
+      <footer className="border-t border-zinc-200 px-3 py-2 text-[10px] leading-relaxed text-zinc-500 sm:px-4">
         <p>
           Predicción orientativa · no reserva · Datos:{' '}
           <a
@@ -213,7 +213,7 @@ function CandidateCard({
         type="button"
         onClick={onSelect}
         aria-pressed={selected}
-        className="w-full px-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        className="w-full px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:py-3"
       >
         <div className="flex items-start gap-2">
           <span
@@ -224,12 +224,15 @@ function CandidateCard({
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
-              <h2 className="truncate text-sm font-semibold text-zinc-900">{candidate.name}</h2>
+              <h2 className="line-clamp-2 text-sm font-semibold text-zinc-900">{candidate.name}</h2>
               <AvailabilityBadge candidate={candidate} />
             </div>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              {candidate.kind === 'garage' ? 'Garaje público' : 'Calle · predicción municipal 1 h'}{' '}
-              · a {candidate.walkingMinutes} min · {Math.round(candidate.distanceMeters)} m
+            <p className="mt-0.5 flex flex-wrap gap-x-1 text-xs text-zinc-500">
+              <span>
+                {candidate.kind === 'garage' ? 'Garaje público' : 'Calle · predicción 1 h'}
+              </span>
+              <span>· a {candidate.walkingMinutes} min</span>
+              <span>· {Math.round(candidate.distanceMeters)} m</span>
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-zinc-500">
               <FreshnessLabel freshness={candidate.freshness} ageMinutes={candidate.ageMinutes} />

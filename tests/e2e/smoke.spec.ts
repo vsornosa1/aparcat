@@ -147,6 +147,21 @@ test('la búsqueda muestra un garaje por defecto', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Ajuntament de València' })).toBeVisible();
 });
 
+test('en móvil la leyenda no tapa el mapa hasta abrirla', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await choosePlace(page);
+
+  const legend = page.getByText(/Garajes: plazas libres/);
+  await expect(page.getByText('80 plazas libres', { exact: true })).toBeVisible();
+  await expect(legend).toBeHidden();
+
+  const legendButton = page.getByRole('button', { name: 'Leyenda' });
+  await legendButton.click();
+
+  await expect(legend).toBeVisible();
+  await expect(legendButton).toHaveAttribute('aria-expanded', 'true');
+});
+
 test('las calles con predicción se activan desde Capas', async ({ page }) => {
   await choosePlace(page);
 
@@ -156,7 +171,7 @@ test('las calles con predicción se activan desde Capas', async ({ page }) => {
   await expect(streetsChip).toHaveAttribute('aria-pressed', 'true');
 
   await expect(page.getByRole('heading', { name: 'Carrer de la Prova' })).toBeVisible();
-  await expect(page.getByText('Calle · predicción municipal 1 h')).toBeVisible();
+  await expect(page.getByText('Calle · predicción 1 h')).toBeVisible();
 });
 
 test('envía un reporte anónimo y muestra confirmación', async ({ page }) => {

@@ -123,9 +123,9 @@ export function ParkflowApp() {
   );
 
   return (
-    <main className="flex min-h-dvh flex-col lg:h-dvh lg:flex-row">
+    <main className="flex h-dvh flex-col overflow-hidden lg:flex-row">
       <section
-        className="relative h-[52dvh] min-h-[320px] shrink-0 lg:h-auto lg:flex-1"
+        className="relative h-[46dvh] min-h-[260px] shrink-0 lg:h-auto lg:min-h-0 lg:flex-1"
         aria-label="Mapa y búsqueda de aparcamiento"
       >
         <ParkingMap
