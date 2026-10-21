@@ -141,14 +141,19 @@ La CLI despliega **el directorio local**, incluidos cambios sin commitear; la in
 
 ## 6. Ingesta de datos (obligatoria para que haya datos)
 
-Vercel no ejecuta procesos persistentes, así que `npm run ingest:watch` no puede vivir ahí. Sin worker, la base se queda vacía o con datos antiguos y la app muestra «sin datos» o «antiguo» (nunca inventa plazas libres).
+Vercel no ejecuta procesos persistentes, así que `npm run ingest:watch` no puede vivir ahí. Por eso `/api/parking/map` y `/api/parking/nearby` refrescan los **garajes** bajo demanda:
+
+- Si la última descarga tiene más de 1 minuto, se refrescan después de responder.
+- Si tiene más de 15 minutos (los garajes estarían a punto de ocultarse), la petición espera al Ayuntamiento, como mucho 4 s y sin reintentos.
+- Cada instancia lo intenta como mucho una vez por minuto, aunque falle, para no saturar la fuente.
+
+Las marcas ORA y las cámaras cambian poco y siguen necesitando una ingesta (worker, cron o `npm run ingest` a mano). Sin ella, esas capas se quedan vacías o antiguas; la app nunca inventa plazas libres.
 
 El scheduler ejecuta:
 
 | Trabajo | Frecuencia |
 | --- | --- |
 | Garajes públicos | 60 s |
-| Aparcamiento regulado | 5 min |
 | Marcas ORA | 24 h |
 | Cámaras (solo metadatos) | 24 h |
 | Purga de reportes caducados | 1 h |

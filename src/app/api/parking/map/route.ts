@@ -1,3 +1,4 @@
+import { freshenParkingFacilities } from '@/api/garage-refresh';
 import { errorResponse, jsonResponse } from '@/api/http';
 import { InvalidBoundsError, loadMapData, parseBounds } from '@/api/map';
 import { logger } from '@/lib/logger';
@@ -17,6 +18,7 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
+    await freshenParkingFacilities(new Date());
     const data = await loadMapData(bounds, new Date());
     return jsonResponse(data, {
       headers: { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=120' },

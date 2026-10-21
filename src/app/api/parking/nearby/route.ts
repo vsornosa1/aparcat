@@ -1,4 +1,5 @@
 import { nearbyQuerySchema } from '@/api/contracts';
+import { freshenParkingFacilities } from '@/api/garage-refresh';
 import { errorResponse, formatZodError, jsonResponse } from '@/api/http';
 import { findNearbyCandidates } from '@/api/nearby';
 import { logger } from '@/lib/logger';
@@ -17,6 +18,7 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
+    await freshenParkingFacilities(new Date());
     const data = await findNearbyCandidates({
       latitude: parsed.data.lat,
       longitude: parsed.data.lng,

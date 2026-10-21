@@ -129,6 +129,8 @@ export interface LayerQueryOptions {
   offset?: number;
   outFields?: string;
   retries?: number;
+  /** Por defecto, `INGEST_TIMEOUT_MS`. */
+  timeoutMs?: number;
 }
 
 const DEFAULT_RETRIES = 2;
@@ -168,6 +170,7 @@ export async function fetchValenciaLayer<T>(
     `${serverEnv().VALENCIA_TRAFFIC_BASE_URL}/${layerId}/query?${query}`,
     layerId,
     options.retries ?? DEFAULT_RETRIES,
+    options.timeoutMs,
   );
   const parsed = schema.safeParse(payload);
   if (!parsed.success) {
@@ -263,11 +266,16 @@ function toDate(value: number | null): Date | null {
 type RequestAttempt =
   { ok: true; payload: unknown } | { ok: false; error: Error; retryable: boolean };
 
-async function requestJson(url: string, layerId: number, retries: number): Promise<unknown> {
+async function requestJson(
+  url: string,
+  layerId: number,
+  retries: number,
+  timeoutMs?: number,
+): Promise<unknown> {
   let lastError: Error = new ValenciaSourceError(`La capa ${layerId} no respondió`, layerId);
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    const outcome = await tryRequest(url, layerId);
+    const outcome = await tryRequest(url, layerId, timeoutMs);
     if (outcome.ok) return outcome.payload;
 
     lastError = outcome.error;
@@ -280,7 +288,11 @@ async function requestJson(url: string, layerId: number, retries: number): Promi
   throw lastError;
 }
 
-async function tryRequest(url: string, layerId: number): Promise<RequestAttempt> {
+async function tryRequest(
+  url: string,
+  layerId: number,
+  timeoutMs?: number,
+): Promise<RequestAttempt> {
   const env = serverEnv();
 
   try {
@@ -289,7 +301,7 @@ async function tryRequest(url: string, layerId: number): Promise<RequestAttempt>
         accept: 'application/json, application/geo+json',
         'user-agent': env.INGEST_USER_AGENT,
       },
-      signal: AbortSignal.timeout(env.INGEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs ?? env.INGEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {

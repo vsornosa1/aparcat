@@ -5,6 +5,7 @@ import {
   fetchValenciaLayer,
   parkingFacilitiesCollection,
   parkingFacilityFromFeature,
+  type LayerQueryOptions,
   type ValenciaParkingFacility,
 } from './sources/valencia';
 import type { IngestResult } from './types';
@@ -45,10 +46,13 @@ export async function ingestParkingFacilities(
   }
 }
 
-async function fetchParkingFacilitiesFromValencia(): Promise<ValenciaParkingFacility[]> {
+export async function fetchParkingFacilitiesFromValencia(
+  options: Pick<LayerQueryOptions, 'retries' | 'timeoutMs'> = {},
+): Promise<ValenciaParkingFacility[]> {
   const collection = await fetchValenciaLayer(
     VALENCIA_LAYERS.parkingFacilities,
     parkingFacilitiesCollection,
+    options,
   );
   const facilities = collection.features
     .map(parkingFacilityFromFeature)
