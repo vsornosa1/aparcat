@@ -27,6 +27,8 @@ const GARAGE = {
   distanceMeters: 90,
   walkingMinutes: 1,
   availability: 0.8,
+  freeSpaces: 80,
+  capacity: 100,
   freshness: 'live',
   confidence: 'high',
   score: 0.9,
@@ -44,6 +46,8 @@ const STREET = {
   distanceMeters: 120,
   walkingMinutes: 2,
   availability: 0.7,
+  freeSpaces: null,
+  capacity: null,
   freshness: 'live',
   confidence: 'high',
   score: 0.8,
@@ -136,8 +140,7 @@ test.beforeEach(async ({ page }) => {
 test('la búsqueda muestra un garaje por defecto', async ({ page }) => {
   await choosePlace(page);
 
-  await expect(page.getByText('80% libre', { exact: true })).toBeVisible();
-  await expect(page.getByText('Garaje público · plazas libres')).toBeVisible();
+  await expect(page.getByText('80 plazas libres', { exact: true })).toBeVisible();
   await expect(page.getByText('En vivo · ahora')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Abrir en Maps' })).toBeVisible();
   await expect(page.getByText('Predicción orientativa')).toBeVisible();

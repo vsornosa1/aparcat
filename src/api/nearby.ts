@@ -133,12 +133,14 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
   ]);
 
   const locations = new Map<string, Coordinates>();
+  const facilityDetails = new Map<string, { freeSpaces: number | null; capacity: number | null }>();
   const candidates: CandidateInput[] = [];
 
   for (const row of facilityRows) {
     const location = { latitude: row.latitude, longitude: row.longitude };
     const id = `garage:${row.id}`;
     locations.set(id, location);
+    facilityDetails.set(id, { freeSpaces: row.free_spaces, capacity: row.capacity });
     candidates.push({
       id,
       kind: 'garage',
@@ -176,7 +178,7 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
     horizonHours: options.horizonHours,
     candidates: ranked
       .slice(0, MAX_CANDIDATES)
-      .map((candidate) => toDto(candidate, locations, options.now)),
+      .map((candidate) => toDto(candidate, locations, facilityDetails, options.now)),
     meta: {
       facilities: facilityRows.length,
       streetSegments: segmentRows.length,
@@ -190,8 +192,11 @@ export async function findNearbyCandidates(options: NearbyOptions): Promise<Near
 function toDto(
   candidate: RankedCandidate,
   locations: Map<string, Coordinates>,
+  facilityDetails: Map<string, { freeSpaces: number | null; capacity: number | null }>,
   now: Date,
 ): Candidate {
+  const details = facilityDetails.get(candidate.id);
+
   return {
     id: candidate.id,
     kind: candidate.kind,
@@ -199,6 +204,8 @@ function toDto(
     distanceMeters: Math.round(candidate.distanceMeters),
     walkingMinutes: candidate.walkingMinutes,
     availability: candidate.availability,
+    freeSpaces: details?.freeSpaces ?? null,
+    capacity: details?.capacity ?? null,
     freshness: candidate.freshness,
     confidence: candidate.confidence,
     score: candidate.score,

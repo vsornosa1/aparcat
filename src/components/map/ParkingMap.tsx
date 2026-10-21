@@ -21,6 +21,7 @@ import type {
   MapSegmentProperties,
 } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
+import { formatFreeSpaces } from '@/lib/format';
 import { getMapStyle } from '@/lib/map-style';
 import { mapsUrl } from '@/lib/maps';
 import type { MapLayerVisibility } from './layers';
@@ -459,15 +460,16 @@ function facilityPopup(
   const availability = document.createElement('p');
   availability.className = 'font-medium text-zinc-800';
   availability.textContent =
-    properties.availability === null
+    properties.freeSpaces === null
       ? 'Sin datos recientes de plazas libres'
-      : `${Math.round(properties.availability * 100)}% de plazas libres`;
+      : formatFreeSpaces(properties.freeSpaces);
 
   const detail = document.createElement('p');
   detail.className = 'text-xs text-zinc-500';
-  if (properties.freeSpaces !== null && properties.capacity !== null) {
-    detail.textContent = `${properties.freeSpaces} de ${properties.capacity} plazas libres · `;
-  }
+  detail.textContent =
+    properties.capacity !== null && properties.freeSpaces !== null
+      ? `de ${properties.capacity} plazas · `
+      : '';
   detail.textContent +=
     properties.ageMinutes === null
       ? 'sin hora de actualización'
@@ -499,7 +501,9 @@ function segmentPopup(
 
   const availability = document.createElement('p');
   availability.className = 'font-medium text-zinc-800';
-  availability.textContent = `${Math.round(properties.availability * 100)}% libre previsto (próxima hora)`;
+  const level =
+    properties.availability >= 0.6 ? 'alta' : properties.availability >= 0.3 ? 'media' : 'baja';
+  availability.textContent = `Probabilidad ${level} de hueco (próxima hora)`;
 
   const detail = document.createElement('p');
   detail.className = 'text-xs text-zinc-500';

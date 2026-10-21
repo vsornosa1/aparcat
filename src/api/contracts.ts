@@ -33,6 +33,8 @@ export const candidateSchema = z.object({
   distanceMeters: z.number().nonnegative(),
   walkingMinutes: z.number().int().nonnegative(),
   availability: z.number().min(0).max(1).nullable(),
+  freeSpaces: z.number().int().nonnegative().nullable(),
+  capacity: z.number().int().nonnegative().nullable(),
   freshness: z.enum(['live', 'recent', 'stale', 'unknown']),
   confidence: z.enum(['high', 'medium', 'low']),
   score: z.number().min(0).max(1),

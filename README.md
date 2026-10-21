@@ -49,6 +49,8 @@ docker compose up -d --build
 
 Levanta PostGIS, aplica migraciones y arranca web e ingesta con healthchecks. Comprueba el estado en `http://localhost:3000/api/health`. Guía completa en [docs/deploy.md](docs/deploy.md).
 
+Si tienes la key de MapTiler en `.env.local`, `docker compose` no la lee por defecto: arranca con `docker compose --env-file .env.local up -d --build` o exporta `NEXT_PUBLIC_MAPTILER_KEY` antes del build. Sin key, el mapa usa el fondo neutro y las capas de datos siguen funcionando.
+
 ## Scripts
 
 | Comando                    | Qué hace                                                                         |

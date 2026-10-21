@@ -1,9 +1,9 @@
 import type { MapLayerVisibility } from './layers';
 
 const COLORS = [
-  { color: 'bg-emerald-600', label: '≥60%' },
-  { color: 'bg-amber-500', label: '30–59%' },
-  { color: 'bg-red-600', label: '<30%' },
+  { color: 'bg-emerald-600', label: 'Alta' },
+  { color: 'bg-amber-500', label: 'Media' },
+  { color: 'bg-red-600', label: 'Baja' },
   { color: 'bg-zinc-400', label: 'Sin datos' },
 ];
 
@@ -57,7 +57,7 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
       </p>
 
       <p className="mt-1 text-[10px] leading-snug text-zinc-500">
-        Garajes: dato municipal (puede estar desactualizado) · Calles: predicción, no reserva
+        Garajes: plazas libres · Calles: probabilidad prevista · no reserva
       </p>
       <p className="text-[10px] leading-snug text-zinc-500">
         Mapa: MapTiler · Datos: Ajuntament de València (CC BY 4.0)

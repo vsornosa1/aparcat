@@ -52,6 +52,8 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     });
     expect(garage?.reportSignal).toBeLessThan(0);
     expect(garage?.reason).toContain('plazas libres');
+    expect(garage?.freeSpaces).toBe(80);
+    expect(garage?.capacity).toBe(100);
     expect(garage?.observedAt).not.toBeNull();
     expect(garage?.ageMinutes).toBeLessThanOrEqual(1);
     expect(garage?.location.latitude).toBeCloseTo(10.001, 4);

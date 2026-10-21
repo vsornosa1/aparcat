@@ -225,15 +225,10 @@ function CandidateCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <h2 className="truncate text-sm font-semibold text-zinc-900">{candidate.name}</h2>
-              <AvailabilityBadge
-                availability={candidate.availability}
-                stale={candidate.freshness === 'stale'}
-              />
+              <AvailabilityBadge candidate={candidate} />
             </div>
             <p className="mt-0.5 text-xs text-zinc-500">
-              {candidate.kind === 'garage'
-                ? 'Garaje público · plazas libres'
-                : 'Calle · predicción municipal 1 h'}{' '}
+              {candidate.kind === 'garage' ? 'Garaje público' : 'Calle · predicción municipal 1 h'}{' '}
               · a {candidate.walkingMinutes} min · {Math.round(candidate.distanceMeters)} m
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-zinc-500">

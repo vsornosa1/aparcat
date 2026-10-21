@@ -1,3 +1,6 @@
+import type { Candidate } from '@/api/contracts';
+import { formatFreeSpaces } from '@/lib/format';
+
 const TONES = {
   high: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   medium: 'bg-amber-50 text-amber-700 ring-amber-600/20',
@@ -12,27 +15,41 @@ const DOTS = {
   unknown: 'bg-zinc-400',
 } as const;
 
-export function AvailabilityBadge({
-  availability,
-  stale = false,
-}: {
-  availability: number | null;
-  stale?: boolean;
-}) {
-  const tone =
-    availability === null || stale
-      ? 'unknown'
-      : availability >= 0.6
-        ? 'high'
-        : availability >= 0.3
-          ? 'medium'
-          : 'low';
+type Tone = keyof typeof TONES;
 
-  const label =
-    availability === null
-      ? 'Sin datos'
-      : `${Math.round(availability * 100)}% libre${stale ? ' · antiguo' : ''}`;
+export function AvailabilityBadge({ candidate }: { candidate: Candidate }) {
+  const stale = candidate.freshness === 'stale';
 
+  if (candidate.kind === 'garage') {
+    const ratio =
+      candidate.freeSpaces !== null && candidate.capacity
+        ? candidate.freeSpaces / candidate.capacity
+        : candidate.availability;
+    const tone = stale ? 'unknown' : toneFor(ratio);
+    const label =
+      candidate.freeSpaces === null
+        ? 'Sin datos'
+        : `${formatFreeSpaces(candidate.freeSpaces)}${stale ? ' · antiguo' : ''}`;
+
+    return <Badge tone={tone} label={label} />;
+  }
+
+  const tone = stale ? 'unknown' : toneFor(candidate.availability);
+  const level =
+    tone === 'high' ? 'alta' : tone === 'medium' ? 'media' : tone === 'low' ? 'baja' : null;
+  const label = level ? `Probabilidad ${level}${stale ? ' · antiguo' : ''}` : 'Sin datos';
+
+  return <Badge tone={tone} label={label} />;
+}
+
+function toneFor(availability: number | null): Tone {
+  if (availability === null) return 'unknown';
+  if (availability >= 0.6) return 'high';
+  if (availability >= 0.3) return 'medium';
+  return 'low';
+}
+
+function Badge({ tone, label }: { tone: Tone; label: string }) {
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${TONES[tone]}`}
