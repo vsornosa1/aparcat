@@ -11,10 +11,3 @@ export function garageAvailability(
 
   return clamp(freeSpaces / capacity, 0, 1);
 }
-
-/** Proporción de aparcamiento libre en la calle a partir de la ocupación municipal. */
-export function streetAvailability(occupancyPct: number | null): number | null {
-  if (occupancyPct === null || !Number.isFinite(occupancyPct)) return null;
-
-  return clamp(1 - occupancyPct / 100, 0, 1);
-}

@@ -2,7 +2,6 @@ import type { Confidence, Freshness, SignalKind } from './types';
 
 export const FRESHNESS_THRESHOLDS_MINUTES: Record<SignalKind, { live: number; recent: number }> = {
   garage: { live: 5, recent: 20 },
-  street_prediction: { live: 60, recent: 360 },
   community_report: { live: 5, recent: 15 },
 };
 

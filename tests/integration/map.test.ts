@@ -1,19 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { InvalidBoundsError, loadMapData, parseBounds } from '@/api/map';
-import { findStreets } from '@/api/streets';
 import { closeDb, getSql, type Sql } from '@/db/client';
 import { runMigrations } from '@/db/migrate';
-import {
-  cleanupNearbyFixtures,
-  seedNearbyFixtures,
-  TEST_BOUNDS,
-  TEST_ORIGIN,
-  TEST_STREET_NAME,
-} from './helpers/nearby-fixtures';
+import { cleanupNearbyFixtures, seedNearbyFixtures, TEST_BOUNDS } from './helpers/nearby-fixtures';
 
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 
-describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
+describe.skipIf(!hasDatabase)('API de mapa', () => {
   let sql: Sql;
 
   beforeAll(async () => {
@@ -33,8 +26,9 @@ describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
   it('devuelve las capas del mapa dentro del bbox', async () => {
     const response = await loadMapData(TEST_BOUNDS, new Date());
 
-    expect(response.meta).toMatchObject({ segments: 1, facilities: 1, reports: 2, cameras: 1 });
-    expect(response.layers.segments.features).toHaveLength(1);
+    expect(response.meta).toMatchObject({ facilities: 1, reports: 2, cameras: 1 });
+    expect(response.layers).not.toHaveProperty('segments');
+    expect(response.meta).not.toHaveProperty('segments');
     expect(response.layers.facilities.features).toHaveLength(1);
     expect(response.layers.facilities.features.some((f) => f.properties.id === 'near-stale')).toBe(
       false,
@@ -48,15 +42,6 @@ describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
       layer: 'camera',
       id: 'near-camera',
       description: 'Cámara de prueba',
-    });
-
-    const segment = response.layers.segments.features[0];
-    expect(segment.geometry.type).toBe('LineString');
-    expect(segment.properties).toMatchObject({
-      layer: 'segment',
-      availability: 0.6,
-      freshness: 'live',
-      confidence: 'high',
     });
 
     const facility = response.layers.facilities.features.find(
@@ -75,7 +60,7 @@ describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
       new Date(),
     );
 
-    expect(response.meta).toMatchObject({ segments: 0, facilities: 1, reports: 0 });
+    expect(response.meta).toMatchObject({ facilities: 1, reports: 0 });
     expect(response.layers.facilities.features[0].properties.id).toBe('near-far');
   });
 
@@ -97,25 +82,5 @@ describe.skipIf(!hasDatabase)('API de mapa y calles', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toContain('s-maxage=60');
-  });
-
-  it('busca calles por nombre para elegir el origen', async () => {
-    const streets = await findStreets('prova');
-
-    expect(streets).toHaveLength(1);
-    expect(streets[0]).toMatchObject({
-      id: 'near-street',
-      name: TEST_STREET_NAME,
-      latitude: expect.closeTo(10.0002, 3),
-      longitude: expect.closeTo(10.001, 3),
-    });
-    expect(TEST_ORIGIN.latitude).toBe(10);
-  });
-
-  it('responde 400 si la búsqueda es demasiado corta', async () => {
-    const { GET } = await import('@/app/api/streets/route');
-    const response = await GET(new Request('http://localhost/api/streets?q=p'));
-
-    expect(response.status).toBe(400);
   });
 });

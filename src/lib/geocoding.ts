@@ -1,5 +1,4 @@
 import type { Coordinates } from '@/domain/types';
-import { searchStreets } from './api-client';
 
 export interface PlaceSuggestion {
   id: string;
@@ -53,20 +52,9 @@ export async function searchPlaces(
         }));
       }
     } catch {
-      // Si MapTiler falla, se usa la búsqueda local de calles.
+      // Sin red o con MapTiler caído la búsqueda no devuelve sugerencias; el mapa sigue sirviendo.
     }
   }
 
-  try {
-    const data = await searchStreets(trimmed);
-    return data.streets.map((street) => ({
-      id: `street:${street.id}`,
-      name: street.name,
-      detail: 'Calle con predicción municipal',
-      latitude: street.latitude,
-      longitude: street.longitude,
-    }));
-  } catch {
-    return [];
-  }
+  return [];
 }

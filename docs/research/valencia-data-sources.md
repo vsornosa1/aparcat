@@ -16,6 +16,8 @@ Todas las comprobaciones se hicieron con peticiones reales desde este repositori
 
 ## 2. Predicción de ocupación del aparcamiento regulado (capas 254, 253, 252, 4)
 
+> **Retirada (2026-10-21):** Aparcat ya no consume estas capas ni muestra predicción de calles. Se conserva esta sección como registro histórico de la investigación. Las tablas `parking_segments` y `occupancy_predictions` siguen en la base de datos, sin escrituras.
+
 - **Endpoints (horizonte / campo):**
   - 1 hora: `.../Trafico/MapServer/254/query?...&f=geojson` → `ocupacion_1`
   - 6 horas: `.../Trafico/MapServer/253/query?...&f=geojson` → `ocupacion_6`

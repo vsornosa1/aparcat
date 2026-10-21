@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { garageAvailability, streetAvailability } from './availability';
+import { garageAvailability } from './availability';
 
 describe('garageAvailability', () => {
   it('calcula la proporción de plazas libres', () => {
@@ -21,29 +21,5 @@ describe('garageAvailability', () => {
 
   it('acota valores incoherentes al rango 0..1', () => {
     expect(garageAvailability(400, 300)).toBe(1);
-  });
-});
-
-describe('streetAvailability', () => {
-  it('invierte el porcentaje de ocupación', () => {
-    expect(streetAvailability(42)).toBeCloseTo(0.58);
-  });
-
-  it('trata el 0% de ocupación como totalmente disponible', () => {
-    expect(streetAvailability(0)).toBe(1);
-  });
-
-  it('trata el 100% de ocupación como sin disponibilidad', () => {
-    expect(streetAvailability(100)).toBe(0);
-  });
-
-  it('acota porcentajes fuera de rango', () => {
-    expect(streetAvailability(120)).toBe(0);
-    expect(streetAvailability(-10)).toBe(1);
-  });
-
-  it('devuelve null sin dato', () => {
-    expect(streetAvailability(null)).toBeNull();
-    expect(streetAvailability(Number.NaN)).toBeNull();
   });
 });

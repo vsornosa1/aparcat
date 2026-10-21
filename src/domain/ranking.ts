@@ -95,8 +95,6 @@ function buildReason(
   switch (candidate.signal) {
     case 'garage':
       return `Dato municipal: ${percent}% de plazas libres (${ageText})${staleNote}`;
-    case 'street_prediction':
-      return `Predicción municipal: ${percent}% libre en la próxima hora (${ageText})${staleNote}`;
     case 'community_report':
       return `Reporte de la comunidad: ${percent}% de disponibilidad (${ageText})${staleNote}`;
   }

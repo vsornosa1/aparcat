@@ -82,7 +82,7 @@ Las migraciones son **aditivas** y cada una se aplica en su propia transacción.
 3. Deja **Allowed user-agent header** vacío para la web: el navegador no permite fijar un User-Agent propio.
 4. No necesitas una key de servidor: el mapa y el geocoding usan `NEXT_PUBLIC_MAPTILER_KEY` desde el navegador.
 
-Sin key, el mapa muestra un fondo neutro y las capas de datos siguen funcionando; la búsqueda cae al endpoint local de calles.
+Sin key, el mapa muestra un fondo neutro y las capas de datos siguen funcionando; la búsqueda no devuelve sugerencias (se puede tocar el mapa o usar la ubicación).
 
 ## 3. Variables de entorno
 

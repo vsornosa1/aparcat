@@ -69,7 +69,7 @@ export function AparcatApp() {
   }, [layers.ora]);
 
   const loadNearby = useCallback(
-    async (coordinates: Coordinates, includeStreets: boolean, options?: { silent?: boolean }) => {
+    async (coordinates: Coordinates, options?: { silent?: boolean }) => {
       const silent = options?.silent ?? false;
       const currentRequest = ++requestId.current;
       if (!silent) {
@@ -80,7 +80,7 @@ export function AparcatApp() {
 
       try {
         const data = withReliableCandidates(
-          await fetchNearby(coordinates.latitude, coordinates.longitude, { includeStreets }),
+          await fetchNearby(coordinates.latitude, coordinates.longitude),
         );
         if (currentRequest !== requestId.current) return;
 
@@ -109,18 +109,18 @@ export function AparcatApp() {
   useEffect(() => {
     if (!origin) return;
 
-    const timer = setTimeout(() => void loadNearby(origin, layers.streets), 250);
+    const timer = setTimeout(() => void loadNearby(origin), 250);
     return () => clearTimeout(timer);
-  }, [origin, layers.streets, loadNearby]);
+  }, [origin, loadNearby]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       if (document.visibilityState !== 'visible') return;
       void loadMap();
-      if (origin) void loadNearby(origin, layers.streets, { silent: true });
+      if (origin) void loadNearby(origin, { silent: true });
     }, REFRESH_MS);
     return () => clearInterval(timer);
-  }, [origin, layers.streets, loadMap, loadNearby]);
+  }, [origin, loadMap, loadNearby]);
 
   const handleOrigin = useCallback((coordinates: Coordinates) => {
     setOrigin(coordinates);
@@ -156,7 +156,7 @@ export function AparcatApp() {
               ? 'Hueco reportado. Gracias por avisar.'
               : 'Zona marcada como llena. Gracias por avisar.',
         });
-        await Promise.all([loadMap(), loadNearby(origin, layers.streets, { silent: true })]);
+        await Promise.all([loadMap(), loadNearby(origin, { silent: true })]);
       } catch (caught) {
         setReport({
           tone: 'error',
@@ -166,7 +166,7 @@ export function AparcatApp() {
         setIsReporting(false);
       }
     },
-    [origin, layers.streets, loadMap, loadNearby],
+    [origin, loadMap, loadNearby],
   );
 
   const candidates = nearby?.candidates;
@@ -238,10 +238,9 @@ export function AparcatApp() {
           state={state}
           error={error}
           selectedId={selectedId}
-          streetsEnabled={layers.streets}
           onSelect={handleSelect}
           onRetry={() => {
-            if (origin) void loadNearby(origin, layers.streets);
+            if (origin) void loadNearby(origin);
           }}
           onLocate={location.locate}
           isLocating={location.isLocating}

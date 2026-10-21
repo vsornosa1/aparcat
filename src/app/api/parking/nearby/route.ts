@@ -1,4 +1,4 @@
-import { nearbyQuerySchema, type Horizon } from '@/api/contracts';
+import { nearbyQuerySchema } from '@/api/contracts';
 import { errorResponse, formatZodError, jsonResponse } from '@/api/http';
 import { findNearbyCandidates } from '@/api/nearby';
 import { logger } from '@/lib/logger';
@@ -10,8 +10,6 @@ export async function GET(request: Request): Promise<Response> {
     lat: params.get('lat') ?? undefined,
     lng: params.get('lng') ?? undefined,
     radius: params.get('radius') ?? undefined,
-    horizon: params.get('horizon') ?? undefined,
-    includeStreets: params.get('includeStreets') ?? undefined,
   });
 
   if (!parsed.success) {
@@ -23,8 +21,6 @@ export async function GET(request: Request): Promise<Response> {
       latitude: parsed.data.lat,
       longitude: parsed.data.lng,
       radiusMeters: parsed.data.radius,
-      horizonHours: parsed.data.horizon as Horizon,
-      includeStreets: parsed.data.includeStreets,
       now: new Date(),
     });
 

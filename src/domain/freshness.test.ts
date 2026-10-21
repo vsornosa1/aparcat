@@ -22,13 +22,6 @@ describe('classifyFreshness', () => {
     expect(classifyFreshness('garage', minutesAgo(21), now)).toBe('stale');
   });
 
-  it('usa umbrales más laxos para la predicción municipal', () => {
-    expect(classifyFreshness('street_prediction', minutesAgo(60), now)).toBe('live');
-    expect(classifyFreshness('street_prediction', minutesAgo(61), now)).toBe('recent');
-    expect(classifyFreshness('street_prediction', minutesAgo(360), now)).toBe('recent');
-    expect(classifyFreshness('street_prediction', minutesAgo(361), now)).toBe('stale');
-  });
-
   it('caduca un reporte de la comunidad a los 15 minutos', () => {
     expect(classifyFreshness('community_report', minutesAgo(5), now)).toBe('live');
     expect(classifyFreshness('community_report', minutesAgo(15), now)).toBe('recent');

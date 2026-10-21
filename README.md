@@ -6,12 +6,11 @@ Webapp para encontrar aparcamiento libre cerca de ti en Valencia sin dar vueltas
 
 ## Cómo funciona
 
-Aparcat combina varias señales legales y complementarias. El mapa arranca con garajes, reportes y zonas ORA; la predicción de calles y las cámaras se activan desde «Capas del mapa»:
+Aparcat combina varias señales legales y complementarias. El mapa muestra garajes, reportes, zonas ORA y, si se activan en «Capas del mapa», las cámaras:
 
 - **Garajes públicos:** plazas libres cuando el Ayuntamiento las publica. Si el dato es antiguo o no existe, se muestra «antiguo» o «sin datos», nunca «libre».
 - **Reportes de la comunidad:** «he dejado un hueco» o «zona llena», anónimos y con caducidad de 15 minutos.
 - **Zonas ORA:** zonas de aparcamiento en calle agrupadas por color: azul (pago), naranja (mixta), verde (residentes) y amarilla (restringida). El color identifica la tarifa; no es una predicción de plazas.
-- **Predicción de aparcamiento regulado:** ocupación estimada por el Ayuntamiento para tramos de la zona centro, etiquetada como predicción y con su hora de consulta.
 - **Cámaras de tráfico:** solo su ubicación y un enlace al visor oficial. No se descargan ni se publican imágenes.
 
 Cada recomendación muestra su antigüedad y su confianza. La app no reserva ni garantiza plazas.
@@ -54,8 +53,8 @@ Abre <http://localhost:3000>. Sin key de MapTiler en `.env.local`, el mapa usa e
 | `npm run test:coverage`    | Cobertura con umbrales                                                           |
 | `npm run test:e2e`         | Playwright con APIs simuladas                                                    |
 | `npm run db:migrate`       | Aplica las migraciones pendientes                                                |
-| `npm run ingest`           | Ejecuta una ingesta completa (garajes, predicciones, marcas, cámaras y limpieza) |
-| `npm run ingest:watch`     | Scheduler continuo: garajes 60 s, predicciones 5 min, marcas 24 h                |
+| `npm run ingest`           | Ejecuta una ingesta completa (garajes, marcas ORA, cámaras y limpieza)           |
+| `npm run ingest:watch`     | Scheduler continuo: garajes 60 s, marcas y cámaras 24 h                          |
 | `npm run probe:sources`    | Verifica que las fuentes municipales siguen respondiendo con el esquema esperado |
 
 El probe admite exportar el anexo de cámaras para la solicitud municipal:
@@ -69,9 +68,8 @@ npm run probe:sources -- --export-cameras=docs/legal/camaras-valencia.csv
 | Método y ruta                            | Propósito                                                      |
 | ---------------------------------------- | -------------------------------------------------------------- |
 | `GET /api/parking/nearby?lat&lng&radius` | Recomendaciones ordenadas con frescura, confianza y motivo     |
-| `GET /api/parking/map?bbox=`             | Capas GeoJSON de tramos, garajes y reportes vigentes           |
+| `GET /api/parking/map?bbox=`             | Capas GeoJSON de garajes, reportes y cámaras vigentes          |
 | `GET /api/parking/ora?bbox=`             | Zonas ORA agrupadas de toda la ciudad, coloreadas por tarifa   |
-| `GET /api/streets?q=`                    | Búsqueda de calle para elegir el origen sin geolocalización    |
 | `POST /api/reports`                      | Reporte anónimo «hueco libre» o «zona llena», caduca en 15 min |
 | `GET /api/health`                        | Estado de la base de datos y última ingesta por fuente         |
 
@@ -93,7 +91,7 @@ En la configuración de la key:
 - **Allowed HTTP Origins:** `localhost`, `127.0.0.1` y tu dominio de producción, sin protocolo ni puerto (`aparcat.vercel.app`, `tudominio.com`).
 - **Allowed user-agent header:** déjalo **vacío** para la web. Los navegadores no permiten fijar un User-Agent propio; ese campo es para apps nativas o peticiones de servidor.
 
-La búsqueda usa MapTiler Geocoding limitado al área de Valencia. Si no hay key, el mapa muestra un fondo neutro con las capas de datos y la búsqueda cae al endpoint local de calles.
+La búsqueda usa MapTiler Geocoding limitado al área de Valencia. Si no hay key, el mapa muestra un fondo neutro con las capas de datos y la búsqueda no devuelve sugerencias (se puede tocar el mapa o usar la ubicación).
 
 En Vercel, define `NEXT_PUBLIC_MAPTILER_KEY` en las variables de entorno del proyecto: se compila en el bundle durante el build.
 

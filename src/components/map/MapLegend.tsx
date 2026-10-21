@@ -8,12 +8,6 @@ const GARAGE_COLORS = [
   { color: 'bg-red-600', label: `menos de ${FEW_SPACES}` },
 ];
 
-const STREET_COLORS = [
-  { color: 'bg-emerald-600', label: 'Alta' },
-  { color: 'bg-amber-500', label: 'Media' },
-  { color: 'bg-red-600', label: 'Baja' },
-];
-
 const ORA_COLORS = [
   { color: 'bg-blue-600', label: 'Azul · pago' },
   { color: 'bg-orange-500', label: 'Naranja · mixta' },
@@ -49,9 +43,6 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
         {layers.reports && <LegendGroup title="Reportes (15 min)" items={REPORT_COLORS} />}
         {layers.ora && (
           <LegendGroup title="Zonas ORA · el color indica la tarifa" items={ORA_COLORS} />
-        )}
-        {layers.streets && (
-          <LegendGroup title="Calles · probabilidad de hueco (1 h)" items={STREET_COLORS} />
         )}
         {layers.cameras && (
           <p className="text-zinc-600">

@@ -1,19 +1,18 @@
 import { getSql } from '@/db/client';
-import { garageAvailability, streetAvailability } from '@/domain/availability';
+import { garageAvailability } from '@/domain/availability';
 import {
   FRESHNESS_THRESHOLDS_MINUTES,
   ageMinutes,
   classifyFreshness,
   confidenceFor,
 } from '@/domain/freshness';
-import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
+import type { Feature, FeatureCollection, Point } from 'geojson';
 import { attribution } from './attribution';
 import {
   type MapCameraProperties,
   type MapFacilityProperties,
   type MapReportProperties,
   type MapResponse,
-  type MapSegmentProperties,
 } from './contracts';
 
 export interface MapBounds {
@@ -30,12 +29,10 @@ export const DEFAULT_MAP_BOUNDS: MapBounds = {
   maxLat: 39.52,
 };
 
-const MAX_SEGMENTS = 500;
 const MAX_FACILITIES = 100;
 const MAX_REPORTS = 200;
 const MAX_CAMERAS = 1_000;
 const GARAGE_MAX_AGE_MINUTES = FRESHNESS_THRESHOLDS_MINUTES.garage.recent;
-const STREET_MAX_AGE_MINUTES = FRESHNESS_THRESHOLDS_MINUTES.street_prediction.recent;
 
 export class InvalidBoundsError extends Error {
   constructor(message: string) {
@@ -58,14 +55,6 @@ export function parseBounds(raw: string | null): MapBounds {
   }
 
   return { minLng, minLat, maxLng, maxLat };
-}
-
-interface SegmentRow {
-  id: string;
-  street_name: string;
-  occupancy_pct: number;
-  fetched_at: Date;
-  geometry: LineString;
 }
 
 interface FacilityRow {
@@ -95,22 +84,7 @@ interface CameraRow {
 export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResponse> {
   const sql = getSql();
 
-  const [segmentRows, facilityRows, reportRows, cameraRows] = await Promise.all([
-    sql<SegmentRow[]>`
-      select
-        s.id,
-        s.street_name,
-        p.occupancy_pct,
-        p.fetched_at,
-        ST_AsGeoJSON(s.geom)::json as geometry
-      from parking_segments s
-      join occupancy_predictions p
-        on p.segment_id = s.id and p.horizon_hours = 1
-      where s.geom && ST_MakeEnvelope(${bounds.minLng}, ${bounds.minLat}, ${bounds.maxLng}, ${bounds.maxLat}, 4326)
-        and p.fetched_at >= now() - make_interval(mins => ${STREET_MAX_AGE_MINUTES})
-      order by s.street_name
-      limit ${MAX_SEGMENTS}
-    `,
+  const [facilityRows, reportRows, cameraRows] = await Promise.all([
     sql<FacilityRow[]>`
       select
         id,
@@ -151,30 +125,6 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
       limit ${MAX_CAMERAS}
     `,
   ]);
-
-  const segments: FeatureCollection<LineString, MapSegmentProperties> = {
-    type: 'FeatureCollection',
-    features: segmentRows.map((row): Feature<LineString, MapSegmentProperties> => {
-      const availability = streetAvailability(row.occupancy_pct);
-      const freshness = classifyFreshness('street_prediction', row.fetched_at, now);
-
-      return {
-        type: 'Feature',
-        geometry: row.geometry,
-        properties: {
-          layer: 'segment',
-          id: row.id,
-          streetName: row.street_name,
-          occupancyPct: row.occupancy_pct,
-          availability: availability ?? 0,
-          freshness,
-          confidence: confidenceFor(freshness, availability),
-          observedAt: row.fetched_at.toISOString(),
-          ageMinutes: ageMinutes(row.fetched_at, now) ?? 0,
-        },
-      };
-    }),
-  };
 
   const facilities: FeatureCollection<Point, MapFacilityProperties> = {
     type: 'FeatureCollection',
@@ -232,14 +182,12 @@ export async function loadMapData(bounds: MapBounds, now: Date): Promise<MapResp
 
   return {
     generatedAt: now.toISOString(),
-    layers: { segments, facilities, reports, cameras },
+    layers: { facilities, reports, cameras },
     meta: {
-      segments: segments.features.length,
       facilities: facilities.features.length,
       reports: reports.features.length,
       cameras: cameras.features.length,
       truncated:
-        segmentRows.length === MAX_SEGMENTS ||
         facilityRows.length === MAX_FACILITIES ||
         reportRows.length === MAX_REPORTS ||
         cameraRows.length === MAX_CAMERAS,

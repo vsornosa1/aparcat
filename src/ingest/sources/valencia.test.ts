@@ -10,8 +10,6 @@ import {
   fetchValenciaLayer,
   parkingFacilitiesCollection,
   parkingFacilityFromFeature,
-  parkingPredictionsCollection,
-  predictionValueFromFeature,
   trafficCameraFromFeature,
   trafficCamerasCollection,
   type ParkingFacilityFeature,
@@ -68,11 +66,6 @@ describe('esquemas de las capas municipales', () => {
     delete payload.features[0].properties.id_aparcamiento;
 
     expect(parkingFacilitiesCollection.safeParse(payload).success).toBe(false);
-  });
-
-  it('acepta líneas de predicción con coordenada Z', () => {
-    const parsed = parkingPredictionsCollection[1].safeParse(fixture('valencia-layer-254.json'));
-    expect(parsed.success).toBe(true);
   });
 
   it('acepta cámaras con la url del visor oficial', () => {
@@ -141,16 +134,16 @@ describe('fetchValenciaLayer', () => {
   it('reintenta ante un error de servidor', async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse({ error: 'boom' }, 500))
-      .mockResolvedValueOnce(jsonResponse(fixture('valencia-layer-254.json')));
+      .mockResolvedValueOnce(jsonResponse(fixture('valencia-layer-194.json')));
 
     const collection = await fetchValenciaLayer(
-      VALENCIA_LAYERS.regulatedParkingPredictions1h,
-      parkingPredictionsCollection[1],
+      VALENCIA_LAYERS.parkingFacilities,
+      parkingFacilitiesCollection,
       { retries: 1 },
     );
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(collection.features).toHaveLength(2);
+    expect(collection.features.length).toBeGreaterThan(0);
   });
 
   it('no reintenta ante un error de cliente', async () => {
@@ -224,7 +217,7 @@ describe('fetchAllValenciaFeatures', () => {
   });
 });
 
-describe('normalización de cámaras y predicciones', () => {
+describe('normalización de cámaras', () => {
   it('extrae la cámara con su visor oficial', () => {
     const feature = trafficCamerasCollection.parse(fixture('valencia-layer-190.json')).features[0];
     const camera = trafficCameraFromFeature(feature);
@@ -232,25 +225,5 @@ describe('normalización de cámaras y predicciones', () => {
     expect(camera?.sourceId).toBe('10209');
     expect(camera?.url).toContain('/visualizador.html?id=10209');
     expect(camera?.longitude).toBeCloseTo(-0.348257, 5);
-  });
-
-  it('lee el valor de ocupación del horizonte pedido', () => {
-    const features = parkingPredictionsCollection[1].parse(
-      fixture('valencia-layer-254.json'),
-    ).features;
-
-    expect(predictionValueFromFeature(1, features[0])).toBe(42);
-    expect(predictionValueFromFeature(1, features[1])).toBe(88);
-  });
-
-  it('trata una ocupación nula como ausencia de dato', () => {
-    const payload = structuredClone(fixture('valencia-layer-254.json')) as {
-      features: { properties: Record<string, unknown> }[];
-    };
-    payload.features[0].properties.ocupacion_1 = null;
-
-    const feature = parkingPredictionsCollection[1].parse(payload).features[0];
-
-    expect(predictionValueFromFeature(1, feature)).toBeNull();
   });
 });

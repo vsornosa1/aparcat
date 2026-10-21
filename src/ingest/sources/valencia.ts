@@ -4,22 +4,9 @@ import { serverEnv } from '@/lib/env';
 /** Capas del MapServer municipal que usa Aparcat. */
 export const VALENCIA_LAYERS = {
   parkingFacilities: 194,
-  regulatedParkingPredictions1h: 254,
-  regulatedParkingPredictions6h: 253,
-  regulatedParkingPredictions12h: 252,
-  regulatedParkingPredictions24h: 4,
   regulatedParkingMarkings: 205,
   trafficCameras: 190,
 } as const;
-
-export type PredictionHorizon = 1 | 6 | 12 | 24;
-
-export const predictionFieldByHorizon = {
-  1: 'ocupacion_1',
-  6: 'ocupacion_6',
-  12: 'ocupacion_12',
-  24: 'ocupacion_24',
-} as const satisfies Record<PredictionHorizon, string>;
 
 const coordinate = z.array(z.number()).min(2);
 
@@ -61,55 +48,10 @@ const parkingFacilityProperties = z.object({
   fiwareid: z.string().nullable(),
 });
 
-const predictionBaseProperties = {
-  objectid: z.number(),
-  id_tramo: z.number(),
-  nombre_via: z.string().nullable(),
-};
-
 export const parkingFacilitiesCollection = featureCollection(
   pointGeometry,
   parkingFacilityProperties,
 );
-
-export interface ValenciaPredictionFeature {
-  type: 'Feature';
-  geometry: { type: 'LineString'; coordinates: number[][] } | null;
-  properties: {
-    objectid: number;
-    id_tramo: number;
-    nombre_via: string | null;
-    [field: string]: number | string | null;
-  };
-}
-
-export interface ValenciaPredictionCollection {
-  type: 'FeatureCollection';
-  features: ValenciaPredictionFeature[];
-  exceededTransferLimit?: boolean;
-}
-
-export const parkingPredictionsCollection: Record<
-  PredictionHorizon,
-  z.ZodType<ValenciaPredictionCollection>
-> = {
-  1: featureCollection(
-    lineStringGeometry,
-    z.object({ ...predictionBaseProperties, ocupacion_1: z.number().nullable() }),
-  ),
-  6: featureCollection(
-    lineStringGeometry,
-    z.object({ ...predictionBaseProperties, ocupacion_6: z.number().nullable() }),
-  ),
-  12: featureCollection(
-    lineStringGeometry,
-    z.object({ ...predictionBaseProperties, ocupacion_12: z.number().nullable() }),
-  ),
-  24: featureCollection(
-    lineStringGeometry,
-    z.object({ ...predictionBaseProperties, ocupacion_24: z.number().nullable() }),
-  ),
-};
 
 export const regulatedParkingMarkingsCollection = featureCollection(
   lineStringGeometry,
@@ -307,19 +249,6 @@ export function trafficCameraFromFeature(
     longitude,
     latitude,
   };
-}
-
-export function predictionValueFromFeature(
-  horizon: PredictionHorizon,
-  feature: ValenciaPredictionFeature,
-): number | null {
-  const field = predictionFieldByHorizon[horizon];
-  const value = feature.properties[field];
-  if (value === null) return null;
-  if (typeof value !== 'number') {
-    throw new Error(`El tramo ${feature.properties.id_tramo} no trae el campo ${field}`);
-  }
-  return value;
 }
 
 function toLongitudeLatitude(coordinates: number[]): { longitude: number; latitude: number } {

@@ -25,12 +25,6 @@ const ITEMS: {
     hint: 'Zonas de aparcamiento en calle agrupadas por color: azul, naranja, verde, blanco y amarillo',
   },
   {
-    key: 'streets',
-    label: 'Calles',
-    symbol: '—',
-    hint: 'Calles con predicción municipal para la próxima hora',
-  },
-  {
     key: 'cameras',
     label: 'Cámaras',
     symbol: 'C',

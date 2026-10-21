@@ -19,7 +19,6 @@ interface RecommendationSheetProps {
   state: LoadState;
   error: string | null;
   selectedId: string | null;
-  streetsEnabled: boolean;
   onSelect: (id: string) => void;
   onRetry: () => void;
   onLocate: () => void;
@@ -35,7 +34,6 @@ export function RecommendationSheet({
   state,
   error,
   selectedId,
-  streetsEnabled,
   onSelect,
   onRetry,
   onLocate,
@@ -54,7 +52,7 @@ export function RecommendationSheet({
           </span>
         </div>
         <p className="mt-0.5 hidden text-xs text-zinc-500 sm:block">
-          Garajes, reportes y zonas ORA. Las calles son una predicción opcional.
+          Garajes con plazas libres, reportes de la comunidad y zonas ORA.
         </p>
       </header>
 
@@ -84,7 +82,7 @@ export function RecommendationSheet({
                 </ol>
               </>
             ) : (
-              <EmptyState streetsEnabled={streetsEnabled} radiusMeters={nearby.radiusMeters} />
+              <EmptyState radiusMeters={nearby.radiusMeters} />
             )}
 
             <ReportButtons onReport={onReport} isReporting={isReporting} feedback={report} />
@@ -169,22 +167,15 @@ function ErrorState({ message, onRetry }: { message: string | null; onRetry: () 
   );
 }
 
-function EmptyState({
-  streetsEnabled,
-  radiusMeters,
-}: {
-  streetsEnabled: boolean;
-  radiusMeters: number;
-}) {
+function EmptyState({ radiusMeters }: { radiusMeters: number }) {
   return (
     <div role="status" className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
       <p className="text-sm font-medium text-zinc-800">
         Nada con datos a menos de {formatDistance(radiusMeters)}
       </p>
       <p className="mt-1 text-xs leading-snug text-zinc-600">
-        {streetsEnabled
-          ? 'Toca otra zona del mapa o busca otro lugar. La predicción municipal se concentra en el centro de Valencia.'
-          : 'No hay garajes públicos con plazas publicadas cerca de este punto. Toca otra zona del mapa, o activa «Calles» en Capas para ver la estimación municipal.'}
+        No hay garajes públicos con plazas publicadas cerca de este punto. Toca otra zona del mapa o
+        busca otro lugar.
       </p>
     </div>
   );
@@ -259,7 +250,7 @@ function CandidateCard({
               <AvailabilityBadge candidate={candidate} />
             </div>
             <p className="mt-0.5 text-xs text-zinc-500">
-              {candidate.kind === 'garage' ? 'Garaje público' : 'Calle · predicción 1 h'} ·{' '}
+              Garaje público ·{' '}
               <span className="text-zinc-700">{candidate.walkingMinutes} min a pie</span> (
               {formatDistance(candidate.distanceMeters)})
             </p>

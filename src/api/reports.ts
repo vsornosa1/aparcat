@@ -43,22 +43,6 @@ export async function createReport(
 
   await sql`delete from availability_reports where expires_at <= now()`;
 
-  let segmentId: string | null = null;
-  if (input.segmentId) {
-    const [segment] = await sql<{ id: string }[]>`
-      select id
-      from parking_segments
-      where id = ${input.segmentId}
-        and ST_DWithin(
-          geom::geography,
-          ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,
-          100
-        )
-      limit 1
-    `;
-    segmentId = segment?.id ?? null;
-  }
-
   const [row] = await sql<
     {
       id: string;
@@ -69,11 +53,10 @@ export async function createReport(
       longitude: number;
     }[]
   >`
-    insert into availability_reports (kind, device_hash, segment_id, expires_at, geom)
+    insert into availability_reports (kind, device_hash, expires_at, geom)
     values (
       ${input.kind},
       ${deviceHash},
-      ${segmentId},
       now() + make_interval(mins => ${REPORT_TTL_MINUTES}),
       ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)
     )

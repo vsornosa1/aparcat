@@ -11,12 +11,11 @@ const NOW = new Date().toISOString();
 const MAP_RESPONSE = {
   generatedAt: NOW,
   layers: {
-    segments: { type: 'FeatureCollection', features: [] },
     facilities: { type: 'FeatureCollection', features: [] },
     reports: { type: 'FeatureCollection', features: [] },
     cameras: { type: 'FeatureCollection', features: [] },
   },
-  meta: { segments: 0, facilities: 1, reports: 0, cameras: 0, truncated: false },
+  meta: { facilities: 1, reports: 0, cameras: 0, truncated: false },
   attribution: ATTRIBUTION,
 };
 
@@ -39,25 +38,6 @@ const GARAGE = {
   location: { latitude: 39.4705, longitude: -0.3763 },
 };
 
-const STREET = {
-  id: 'street:2411',
-  kind: 'street',
-  name: 'Carrer de la Prova',
-  distanceMeters: 120,
-  walkingMinutes: 2,
-  availability: 0.7,
-  freeSpaces: null,
-  capacity: null,
-  freshness: 'live',
-  confidence: 'high',
-  score: 0.8,
-  reportSignal: 0.5,
-  observedAt: NOW,
-  ageMinutes: 1,
-  reason: 'Predicción municipal: 70% libre en la próxima hora (hace 1 min)',
-  location: { latitude: 39.4705, longitude: -0.3763 },
-};
-
 const CREATED_REPORT = {
   id: '00000000-0000-4000-8000-000000000000',
   kind: 'spot_free',
@@ -72,38 +52,15 @@ async function mockApis(page: Page): Promise<void> {
   await page.route('**/api/parking/ora**', (route) =>
     route.fulfill({ json: { type: 'FeatureCollection', features: [] } }),
   );
-  await page.route('**/api/parking/nearby*', (route) => {
-    const includeStreets =
-      new URL(route.request().url()).searchParams.get('includeStreets') === '1';
-
-    return route.fulfill({
+  await page.route('**/api/parking/nearby*', (route) =>
+    route.fulfill({
       json: {
         origin: { latitude: 39.4705, longitude: -0.3763 },
         generatedAt: NOW,
         radiusMeters: 800,
-        horizonHours: 1,
-        candidates: includeStreets ? [STREET] : [GARAGE],
-        meta: {
-          facilities: includeStreets ? 0 : 1,
-          streetSegments: includeStreets ? 1 : 0,
-          reports: 0,
-          totalConsidered: 1,
-        },
+        candidates: [GARAGE],
+        meta: { facilities: 1, reports: 0, totalConsidered: 1 },
         attribution: ATTRIBUTION,
-      },
-    });
-  });
-  await page.route('**/api/streets*', (route) =>
-    route.fulfill({
-      json: {
-        streets: [
-          {
-            id: 'street:2411',
-            name: 'Carrer de la Prova',
-            latitude: 39.4705,
-            longitude: -0.3763,
-          },
-        ],
       },
     }),
   );
@@ -187,16 +144,17 @@ test('en móvil la capa ORA se puede activar y desactivar', async ({ page }) => 
   await expect(ora).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('las calles con predicción se activan desde Capas', async ({ page }) => {
+test('el mapa ofrece exactamente cuatro capas, sin calles', async ({ page }) => {
   await choosePlace(page);
 
-  const streetsChip = page.getByRole('button', { name: /^Calles:/ });
-  await expect(streetsChip).toHaveAttribute('aria-pressed', 'false');
-  await streetsChip.click();
-  await expect(streetsChip).toHaveAttribute('aria-pressed', 'true');
-
-  await expect(page.getByRole('heading', { name: 'Carrer de la Prova' })).toBeVisible();
-  await expect(page.getByText('Calle · predicción 1 h')).toBeVisible();
+  const layers = page.getByRole('group', { name: 'Capas del mapa' }).getByRole('button');
+  await expect(layers).toHaveCount(4);
+  await expect(layers.nth(0)).toHaveAccessibleName(/^Garajes:/);
+  await expect(layers.nth(1)).toHaveAccessibleName(/^Reportes:/);
+  await expect(layers.nth(2)).toHaveAccessibleName(/^ORA:/);
+  await expect(layers.nth(3)).toHaveAccessibleName(/^Cámaras:/);
+  await expect(page.getByRole('button', { name: /^Calles:/ })).toHaveCount(0);
+  await expect(page.getByText('predicción 1 h')).toHaveCount(0);
 });
 
 test('envía un reporte anónimo y muestra confirmación', async ({ page }) => {

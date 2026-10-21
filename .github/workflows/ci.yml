@@ -24,7 +24,7 @@ jobs:
           --health-retries 12
     env:
       DATABASE_URL: postgres://aparcat:aparcat@localhost:5432/aparcat
-      REPORT_SALT: ci-salt
+      REPORT_SALT: ci-report-salt
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,7 +41,7 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     env:
-      REPORT_SALT: ci-salt
+      REPORT_SALT: ci-report-salt
       NEXT_PUBLIC_MAPTILER_KEY: e2e-test-key
     steps:
       - uses: actions/checkout@v4

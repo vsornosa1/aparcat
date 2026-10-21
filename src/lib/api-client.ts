@@ -4,7 +4,6 @@ import type {
   MapResponse,
   NearbyResponse,
   OraFeatureCollection,
-  Street,
 } from '@/api/contracts';
 import { getDeviceId } from './device-token';
 
@@ -46,21 +45,15 @@ export function fetchOraData(): Promise<OraFeatureCollection> {
 export function fetchNearby(
   latitude: number,
   longitude: number,
-  options: { radiusMeters?: number; includeStreets?: boolean } = {},
+  options: { radiusMeters?: number } = {},
 ): Promise<NearbyResponse> {
   const params = new URLSearchParams({
     lat: String(latitude),
     lng: String(longitude),
     radius: String(options.radiusMeters ?? 800),
-    includeStreets: options.includeStreets === false ? '0' : '1',
   });
 
   return request<NearbyResponse>(`/api/parking/nearby?${params.toString()}`);
-}
-
-export function searchStreets(query: string): Promise<{ streets: Street[] }> {
-  const params = new URLSearchParams({ q: query });
-  return request<{ streets: Street[] }>(`/api/streets?${params.toString()}`);
 }
 
 export function sendReport(input: CreateReportInput): Promise<CreatedReport> {

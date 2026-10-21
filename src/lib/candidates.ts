@@ -3,7 +3,7 @@ import { isNil } from '@/lib/nil';
 
 export function isReliableCandidate(candidate: Candidate): boolean {
   if (isNil(candidate.availability)) return false;
-  if (candidate.kind === 'garage' && isNil(candidate.freeSpaces)) return false;
+  if (isNil(candidate.freeSpaces)) return false;
 
   return candidate.confidence !== 'low';
 }

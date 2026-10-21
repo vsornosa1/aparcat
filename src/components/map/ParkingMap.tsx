@@ -20,7 +20,6 @@ import type {
   MapOraProperties,
   MapReportProperties,
   MapResponse,
-  MapSegmentProperties,
   OraFeatureCollection,
 } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
@@ -35,17 +34,6 @@ import { mapsUrl } from '@/lib/maps';
 import type { MapLayerVisibility } from './layers';
 
 const CENTER = { latitude: 39.4699, longitude: -0.3763 };
-
-const SEGMENT_COLOR: ExpressionSpecification = [
-  'case',
-  ['==', ['get', 'freshness'], 'stale'],
-  '#a1a1aa',
-  ['>=', ['get', 'availability'], 0.6],
-  '#059669',
-  ['>=', ['get', 'availability'], 0.3],
-  '#d97706',
-  '#dc2626',
-];
 
 // Mismos umbrales que la tarjeta: plazas absolutas, no porcentaje.
 const FACILITY_COLOR: ExpressionSpecification = [
@@ -92,7 +80,6 @@ const INTERACTIVE_LAYERS = [
   'cameras-circle',
   'cameras-icon',
   'reports-circle',
-  'segments-line',
   'ora-fill',
   'ora-outline',
 ];
@@ -170,9 +157,8 @@ export function ParkingMap({
       };
 
       const addLayers = () => {
-        if (map.getSource('segments')) return;
+        if (map.getSource('ora')) return;
 
-        map.addSource('segments', { type: 'geojson', data: emptyCollection() });
         map.addSource('ora', { type: 'geojson', data: emptyCollection() });
         map.addSource('facilities', { type: 'geojson', data: emptyCollection() });
         map.addSource('cameras', { type: 'geojson', data: emptyCollection() });
@@ -198,17 +184,6 @@ export function ParkingMap({
             'line-color': ORA_COLOR,
             'line-width': 1.5,
             'line-opacity': 0.85,
-          },
-        });
-
-        map.addLayer({
-          id: 'segments-line',
-          type: 'line',
-          source: 'segments',
-          paint: {
-            'line-color': SEGMENT_COLOR,
-            'line-width': 5,
-            'line-opacity': 0.9,
           },
         });
 
@@ -337,15 +312,6 @@ export function ParkingMap({
           showPopup(event, reportPopup(feature.properties as unknown as MapReportProperties));
         });
 
-        map.on('click', 'segments-line', (event: MapLayerMouseEvent) => {
-          const feature = event.features?.[0];
-          if (!feature) return;
-          showPopup(
-            event,
-            segmentPopup(feature.properties as unknown as MapSegmentProperties, event.lngLat),
-          );
-        });
-
         const handleOraClick = (event: MapLayerMouseEvent) => {
           const feature = event.features?.[0];
           if (!feature) return;
@@ -357,7 +323,6 @@ export function ParkingMap({
               'cameras-circle',
               'cameras-icon',
               'reports-circle',
-              'segments-line',
             ],
           });
           if (priority.length > 0) return;
@@ -427,9 +392,6 @@ export function ParkingMap({
     const map = mapRef.current;
     if (!map) return;
 
-    (map.getSource('segments') as GeoJSONSource | undefined)?.setData(
-      data?.layers.segments ?? emptyCollection(),
-    );
     (map.getSource('ora') as GeoJSONSource | undefined)?.setData(ora ?? emptyCollection());
     (map.getSource('facilities') as GeoJSONSource | undefined)?.setData(
       data?.layers.facilities ?? emptyCollection(),
@@ -447,7 +409,6 @@ export function ParkingMap({
     const map = mapRef.current;
     if (!map) return;
 
-    setLayerVisibility(map, 'segments-line', layers.streets);
     setLayerVisibility(map, 'ora-fill', layers.ora);
     setLayerVisibility(map, 'ora-outline', layers.ora);
     setLayerVisibility(map, 'facilities-circle', layers.garages);
@@ -631,43 +592,6 @@ function facilityPopup(
       : `${capacity !== null ? `de ${capacity} plazas · ` : ''}${
           ageMinutes !== null ? `actualizado hace ${ageMinutes} min` : 'sin hora de actualización'
         }`;
-
-  root.append(
-    title,
-    type,
-    availability,
-    detail,
-    mapsLink({ longitude: location.lng, latitude: location.lat }),
-  );
-  return root;
-}
-
-function segmentPopup(
-  properties: MapSegmentProperties,
-  location: { lng: number; lat: number },
-): HTMLElement {
-  const root = document.createElement('div');
-  root.className = 'space-y-1 text-sm';
-
-  const title = document.createElement('strong');
-  title.textContent = properties.streetName;
-
-  const type = document.createElement('p');
-  type.className = 'text-xs text-zinc-500';
-  type.textContent = 'Calle con aparcamiento regulado · predicción municipal';
-
-  const availability = document.createElement('p');
-  availability.className = 'font-medium text-zinc-800';
-  const level =
-    properties.availability >= 0.6 ? 'alta' : properties.availability >= 0.3 ? 'media' : 'baja';
-  availability.textContent = `Probabilidad ${level} de hueco (próxima hora)`;
-
-  const detail = document.createElement('p');
-  detail.className = 'text-xs text-zinc-500';
-  const ageMinutes = properties.ageMinutes ?? null;
-  detail.textContent = `${
-    ageMinutes !== null ? `Consultada hace ${ageMinutes} min. ` : 'Sin hora de actualización. '
-  }Puede incluir partes sin plazas. No es una reserva.`;
 
   root.append(
     title,

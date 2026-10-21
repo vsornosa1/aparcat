@@ -92,44 +92,6 @@ describe.skipIf(!hasDatabase)('API de reportes de la comunidad', () => {
     expect(body.error.code).toBe('invalid_body');
   });
 
-  it('asocia el reporte al tramo si está a menos de 100 metros', async () => {
-    const response = await postReport(
-      {
-        kind: 'spot_free',
-        latitude: ORIGIN.latitude,
-        longitude: ORIGIN.longitude,
-        segmentId: 'near-street',
-      },
-      { deviceId: crypto.randomUUID(), ip: '10.1.0.5' },
-    );
-
-    expect(response.status).toBe(201);
-    const report = createdReportSchema.parse(await response.json());
-    const [row] = await sql<{ segment_id: string | null }[]>`
-      select segment_id from availability_reports where id = ${report.id}
-    `;
-    expect(row.segment_id).toBe('near-street');
-  });
-
-  it('ignora un tramo que queda lejos del reporte', async () => {
-    const response = await postReport(
-      {
-        kind: 'area_full',
-        latitude: 10.004,
-        longitude: 10.004,
-        segmentId: 'near-street',
-      },
-      { deviceId: crypto.randomUUID(), ip: '10.1.0.6' },
-    );
-
-    expect(response.status).toBe(201);
-    const report = createdReportSchema.parse(await response.json());
-    const [row] = await sql<{ segment_id: string | null }[]>`
-      select segment_id from availability_reports where id = ${report.id}
-    `;
-    expect(row.segment_id).toBeNull();
-  });
-
   it('borra los reportes caducados al insertar uno nuevo', async () => {
     await sql`
       insert into availability_reports (kind, device_hash, created_at, expires_at, geom)

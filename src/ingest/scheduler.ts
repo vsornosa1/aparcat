@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { ingestTrafficCameras } from './cameras';
 import { ingestParkingFacilities } from './facilities';
 import { purgeExpiredReports, purgeOldIngestRuns } from './retention';
-import { ingestOraMarkings, ingestRegulatedParking } from './segments';
+import { ingestOraMarkings } from './segments';
 import type { IngestResult } from './types';
 
 const MINUTE = 60_000;
@@ -15,7 +15,6 @@ interface ScheduledJob {
 
 const JOBS: ScheduledJob[] = [
   { name: 'parking_facilities', intervalMs: MINUTE, run: () => ingestParkingFacilities() },
-  { name: 'regulated_parking', intervalMs: 5 * MINUTE, run: () => ingestRegulatedParking() },
   { name: 'ora_markings', intervalMs: 24 * 60 * MINUTE, run: () => ingestOraMarkings() },
   { name: 'traffic_cameras', intervalMs: 24 * 60 * MINUTE, run: () => ingestTrafficCameras() },
   {

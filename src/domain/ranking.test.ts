@@ -104,16 +104,10 @@ describe('rankCandidates', () => {
 
   it('explica la recomendación con frescura y confianza', () => {
     const [garage] = rankCandidates([candidate()], { now });
-    const [street] = rankCandidates(
-      [candidate({ kind: 'street', signal: 'street_prediction', name: 'Carrer de Xàtiva' })],
-      { now },
-    );
-
     expect(garage.reason).toContain('plazas libres');
     expect(garage.reason).toContain('hace 2 min');
     expect(garage.confidence).toBe('high');
-    expect(street.reason).toContain('Predicción municipal');
-    expect(street.walkingMinutes).toBe(4);
+    expect(garage.walkingMinutes).toBe(4);
   });
 
   it('marca sin datos y confianza baja cuando falta la disponibilidad', () => {

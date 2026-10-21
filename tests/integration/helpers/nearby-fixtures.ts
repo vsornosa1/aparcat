@@ -2,11 +2,10 @@ import type { Sql } from '@/db/client';
 
 export const TEST_ORIGIN = { latitude: 10, longitude: 10 };
 export const TEST_BOUNDS = { minLng: 9.99, minLat: 9.99, maxLng: 10.01, maxLat: 10.01 };
-export const TEST_STREET_NAME = 'Carrer de la Prova';
 
 /**
  * Escenario aislado lejos de Valencia para que las pruebas no toquen datos reales.
- * Origen en (10, 10): un garaje, otro sin dato, uno lejano, un tramo y dos reportes.
+ * Origen en (10, 10): un garaje, otro sin dato, uno antiguo, uno lejano y dos reportes.
  */
 export async function seedNearbyFixtures(sql: Sql): Promise<void> {
   await cleanupNearbyFixtures(sql);
@@ -19,21 +18,6 @@ export async function seedNearbyFixtures(sql: Sql): Promise<void> {
       ('near-unknown', 'Garaje sin dato', 50, null, null, ${now}, ST_SetSRID(ST_MakePoint(10.0005, 10.0005), 4326)),
       ('near-stale', 'Garaje antiguo', 100, 10, now() - interval '2 days', ${now}, ST_SetSRID(ST_MakePoint(10.0003, 10.0003), 4326)),
       ('near-far', 'Garaje lejano', 200, 150, ${now}, ${now}, ST_SetSRID(ST_MakePoint(10.05, 10.05), 4326))
-  `;
-
-  await sql`
-    insert into parking_segments (id, street_name, fetched_at, geom)
-    values (
-      'near-street',
-      ${TEST_STREET_NAME},
-      ${now},
-      ST_SetSRID(ST_MakeLine(ST_MakePoint(10.0005, 10.0002), ST_MakePoint(10.0015, 10.0002)), 4326)
-    )
-  `;
-
-  await sql`
-    insert into occupancy_predictions (segment_id, horizon_hours, occupancy_pct, source_layer, fetched_at)
-    values ('near-street', 1, 40, 254, ${now})
   `;
 
   await sql`
@@ -81,7 +65,6 @@ export async function cleanupNearbyFixtures(sql: Sql): Promise<void> {
       5000
     )
   `;
-  await sql`delete from parking_segments where id like 'near-%'`;
   await sql`delete from parking_facilities where id like 'near-%'`;
   await sql`delete from traffic_cameras where id like 'near-%'`;
   await sql`delete from ora_markings where id like 'near-%'`;

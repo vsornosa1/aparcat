@@ -1,6 +1,6 @@
 import { ingestParkingFacilities } from './facilities';
 import { purgeExpiredReports, purgeOldIngestRuns } from './retention';
-import { ingestOraMarkings, ingestRegulatedParking } from './segments';
+import { ingestOraMarkings } from './segments';
 import { ingestTrafficCameras } from './cameras';
 import type { IngestResult } from './types';
 
@@ -9,7 +9,6 @@ export async function runIngestionOnce(): Promise<IngestResult[]> {
   const results: IngestResult[] = [];
 
   results.push(await ingestParkingFacilities());
-  results.push(await ingestRegulatedParking());
   results.push(await ingestOraMarkings());
   results.push(await ingestTrafficCameras());
   results.push({

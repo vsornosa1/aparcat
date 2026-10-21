@@ -24,22 +24,20 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     await closeDb();
   });
 
-  it('combina garajes, calles y reportes con frescura', async () => {
+  it('devuelve garajes con reportes y frescura', async () => {
     const response = await findNearbyCandidates({
       latitude: TEST_ORIGIN.latitude,
       longitude: TEST_ORIGIN.longitude,
       radiusMeters: 800,
-      horizonHours: 1,
       now: new Date(),
     });
 
     expect(response.meta).toMatchObject({
       facilities: 1,
-      streetSegments: 1,
       reports: 2,
-      totalConsidered: 2,
+      totalConsidered: 1,
     });
-    expect(response.candidates).toHaveLength(2);
+    expect(response.candidates).toHaveLength(1);
     expect(nearbyResponseSchema.safeParse(response).success).toBe(true);
 
     const garage = response.candidates.find((candidate) => candidate.id === 'garage:near-facility');
@@ -57,15 +55,6 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     expect(garage?.observedAt).not.toBeNull();
     expect(garage?.ageMinutes).toBeLessThanOrEqual(1);
     expect(garage?.location.latitude).toBeCloseTo(10.001, 4);
-
-    const street = response.candidates.find((candidate) => candidate.id === 'street:near-street');
-    expect(street).toMatchObject({
-      kind: 'street',
-      availability: 0.6,
-      freshness: 'live',
-    });
-    expect(street?.reportSignal).toBeGreaterThan(0);
-    expect(street?.reason).toContain('Predicción municipal');
   });
 
   it('excluye los garajes sin datos', async () => {
@@ -73,7 +62,6 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
       latitude: TEST_ORIGIN.latitude,
       longitude: TEST_ORIGIN.longitude,
       radiusMeters: 800,
-      horizonHours: 1,
       now: new Date(),
     });
 
@@ -87,7 +75,6 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
       latitude: TEST_ORIGIN.latitude,
       longitude: TEST_ORIGIN.longitude,
       radiusMeters: 800,
-      horizonHours: 1,
       now: new Date(),
     });
 
@@ -102,7 +89,6 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
       latitude: TEST_ORIGIN.latitude,
       longitude: TEST_ORIGIN.longitude,
       radiusMeters: 300,
-      horizonHours: 1,
       now: new Date(),
     });
 
@@ -110,17 +96,16 @@ describe.skipIf(!hasDatabase)('API de recomendaciones cercanas', () => {
     expect(response.meta.facilities).toBe(1);
   });
 
-  it('omite las calles cuando la capa está desactivada', async () => {
+  it('no expone datos de calles ni horizontes', async () => {
     const response = await findNearbyCandidates({
       latitude: TEST_ORIGIN.latitude,
       longitude: TEST_ORIGIN.longitude,
       radiusMeters: 800,
-      horizonHours: 1,
-      includeStreets: false,
       now: new Date(),
     });
 
-    expect(response.meta.streetSegments).toBe(0);
+    expect(response.meta).not.toHaveProperty('streetSegments');
+    expect(response).not.toHaveProperty('horizonHours');
     expect(response.candidates.every((candidate) => candidate.kind === 'garage')).toBe(true);
   });
 

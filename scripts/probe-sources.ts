@@ -13,30 +13,23 @@ import {
   fetchValenciaLayer,
   parkingFacilitiesCollection,
   parkingFacilityFromFeature,
-  parkingPredictionsCollection,
-  predictionValueFromFeature,
   regulatedParkingMarkingsCollection,
   trafficCameraFromFeature,
   trafficCamerasCollection,
-  type PredictionHorizon,
   type ValenciaParkingFacility,
 } from '@/ingest/sources/valencia';
 
 const EXPECTED_COUNTS: Record<string, { min: number; max: number }> = {
   parkingFacilities: { min: 15, max: 40 },
-  regulatedParkingPredictions: { min: 150, max: 600 },
   regulatedParkingMarkings: { min: 20_000, max: 60_000 },
   trafficCameras: { min: 400, max: 1_200 },
 };
-
-const HORIZONS: PredictionHorizon[] = [1, 6, 12, 24];
 
 const failures: string[] = [];
 const warnings: string[] = [];
 
 async function main(): Promise<void> {
   await checkParkingFacilities();
-  await checkPredictions();
   await checkMarkings();
   await checkCameras();
   await exportCamerasIfRequested();
@@ -80,43 +73,6 @@ async function checkParkingFacilities(): Promise<void> {
   if (buckets.fresh === 0) {
     warnings.push('Ningún garaje devuelve plazas libres frescas; la app mostrará «sin datos».');
   }
-}
-
-async function checkPredictions(): Promise<void> {
-  const layerByHorizon: Record<PredictionHorizon, number> = {
-    1: VALENCIA_LAYERS.regulatedParkingPredictions1h,
-    6: VALENCIA_LAYERS.regulatedParkingPredictions6h,
-    12: VALENCIA_LAYERS.regulatedParkingPredictions12h,
-    24: VALENCIA_LAYERS.regulatedParkingPredictions24h,
-  };
-
-  let count: number | undefined;
-  for (const horizon of HORIZONS) {
-    const layerId = layerByHorizon[horizon];
-    const horizonCount = await guard(`Predicción ${horizon} h`, layerId, () =>
-      countValenciaLayer(layerId),
-    );
-    count ??= horizonCount;
-
-    const collection = await guard(`Predicción ${horizon} h`, layerId, () =>
-      fetchValenciaLayer(layerId, parkingPredictionsCollection[horizon], { limit: 25 }),
-    );
-    const values = collection.features
-      .map((feature) => predictionValueFromFeature(horizon, feature))
-      .filter((value): value is number => value !== null);
-    const nulls = collection.features.length - values.length;
-
-    console.log(
-      `Predicción ${horizon} h (capa ${layerId}): ${horizonCount} tramos · muestra de ${values.length} valores ${describe(values)}${nulls > 0 ? ` · ${nulls} nulos` : ''}`,
-    );
-  }
-
-  checkExpectedCount(
-    'Predicción de ocupación',
-    layerByHorizon[1],
-    count,
-    EXPECTED_COUNTS.regulatedParkingPredictions,
-  );
 }
 
 async function checkMarkings(): Promise<void> {
@@ -226,12 +182,6 @@ function bucketByAge(facilities: ValenciaParkingFacility[]): AgeBuckets {
   }
 
   return buckets;
-}
-
-function describe(values: number[]): string {
-  if (values.length === 0) return 'sin valores';
-  const sum = values.reduce((total, value) => total + value, 0);
-  return `(min ${Math.min(...values)} · media ${Math.round(sum / values.length)} · max ${Math.max(...values)})`;
 }
 
 function csvCell(value: string | number | null | undefined): string {

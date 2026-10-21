@@ -1,7 +1,7 @@
 export type Freshness = 'live' | 'recent' | 'stale' | 'unknown';
 export type Confidence = 'high' | 'medium' | 'low';
-export type CandidateKind = 'garage' | 'street';
-export type SignalKind = 'garage' | 'street_prediction' | 'community_report';
+export type CandidateKind = 'garage';
+export type SignalKind = 'garage' | 'community_report';
 
 export interface Coordinates {
   latitude: number;
