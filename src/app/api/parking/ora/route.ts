@@ -1,12 +1,12 @@
 import { gzipSync } from 'node:zlib';
 import { errorResponse, jsonResponse } from '@/api/http';
 import { InvalidBoundsError, parseBounds } from '@/api/map';
-import { loadOraMarkings } from '@/api/ora';
+import { loadOraZones } from '@/api/ora';
 import { logger } from '@/lib/logger';
 import { getRequestId } from '@/lib/request-id';
 
 const CACHE_HEADERS = {
-  'cache-control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  'cache-control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
   vary: 'accept-encoding',
 };
 
@@ -24,9 +24,9 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
-    const data = await loadOraMarkings(bounds);
+    const data = await loadOraZones(bounds);
 
-    // La capa completa son ~33.000 marcas; sin gzip pesa ~8 MB.
+    // La capa completa puede pesar varios MB; sin gzip se nota en móvil.
     if (request.headers.get('accept-encoding')?.includes('gzip')) {
       return new Response(gzipSync(JSON.stringify(data)), {
         headers: {

@@ -10,7 +10,7 @@ Parkflow combina varias señales legales y complementarias. El mapa arranca con 
 
 - **Garajes públicos:** plazas libres cuando el Ayuntamiento las publica. Si el dato es antiguo o no existe, se muestra «antiguo» o «sin datos», nunca «libre».
 - **Reportes de la comunidad:** «he dejado un hueco» o «zona llena», anónimos y con caducidad de 15 minutos.
-- **Zonas ORA:** marcas de zona azul (rotación), naranja (mixta), verde (residentes), blanca (libre) y amarilla (restringida) en toda la ciudad. El color identifica la tarifa; no es una predicción de plazas.
+- **Zonas ORA:** zonas de aparcamiento en calle agrupadas por color: azul (pago), naranja (mixta), verde (residentes), blanca (gratis) y amarilla (restringida). El color identifica la tarifa; no es una predicción de plazas.
 - **Predicción de aparcamiento regulado:** ocupación estimada por el Ayuntamiento para tramos de la zona centro, etiquetada como predicción y con su hora de consulta.
 - **Cámaras de tráfico:** solo su ubicación y un enlace al visor oficial. No se descargan ni se publican imágenes.
 
@@ -81,7 +81,7 @@ npm run probe:sources -- --export-cameras=docs/legal/camaras-valencia.csv
 | ---------------------------------------- | -------------------------------------------------------------- |
 | `GET /api/parking/nearby?lat&lng&radius` | Recomendaciones ordenadas con frescura, confianza y motivo     |
 | `GET /api/parking/map?bbox=`             | Capas GeoJSON de tramos, garajes y reportes vigentes           |
-| `GET /api/parking/ora?bbox=`             | Marcas ORA de toda la ciudad, coloreadas por tipo de zona      |
+| `GET /api/parking/ora?bbox=`             | Zonas ORA agrupadas de toda la ciudad, coloreadas por tarifa   |
 | `GET /api/streets?q=`                    | Búsqueda de calle para elegir el origen sin geolocalización    |
 | `POST /api/reports`                      | Reporte anónimo «hueco libre» o «zona llena», caduca en 15 min |
 | `GET /api/health`                        | Estado de la base de datos y última ingesta por fuente         |

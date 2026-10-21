@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { loadOraMarkings } from '@/api/ora';
+import { loadOraZones } from '@/api/ora';
 import { closeDb, getSql, type Sql } from '@/db/client';
 import { runMigrations } from '@/db/migrate';
 import { cleanupNearbyFixtures, seedNearbyFixtures, TEST_BOUNDS } from './helpers/nearby-fixtures';
@@ -23,21 +23,21 @@ describe.skipIf(!hasDatabase)('API de zonas ORA', () => {
     await closeDb();
   });
 
-  it('devuelve las marcas ORA dentro del bbox', async () => {
-    const response = await loadOraMarkings(TEST_BOUNDS);
+  it('devuelve las zonas ORA dentro del bbox', async () => {
+    const response = await loadOraZones(TEST_BOUNDS);
 
     expect(response.type).toBe('FeatureCollection');
     expect(response.features).toHaveLength(1);
-    expect(response.features[0].geometry.type).toBe('LineString');
+    expect(response.features[0].geometry.type).toBe('Polygon');
     expect(response.features[0].properties).toMatchObject({
       layer: 'ora',
-      id: 'near-ora',
+      id: 'ora-Azul',
       color: 'Azul',
     });
   });
 
-  it('excluye las marcas fuera del bbox', async () => {
-    const response = await loadOraMarkings({
+  it('excluye las zonas fuera del bbox', async () => {
+    const response = await loadOraZones({
       minLng: 10.04,
       minLat: 10.04,
       maxLng: 10.06,

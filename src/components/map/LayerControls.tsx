@@ -22,7 +22,7 @@ const ITEMS: {
     key: 'ora',
     label: 'ORA',
     symbol: '▦',
-    hint: 'Zonas de aparcamiento regulado en toda la ciudad: azul, naranja, verde, blanco y amarillo',
+    hint: 'Zonas de aparcamiento en calle agrupadas por color: azul, naranja, verde, blanco y amarillo',
   },
   {
     key: 'streets',

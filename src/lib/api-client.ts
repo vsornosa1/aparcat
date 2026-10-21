@@ -40,7 +40,7 @@ export function fetchMapData(): Promise<MapResponse> {
 }
 
 export function fetchOraData(): Promise<OraFeatureCollection> {
-  return request<OraFeatureCollection>('/api/parking/ora');
+  return request<OraFeatureCollection>('/api/parking/ora?v=4');
 }
 
 export function fetchNearby(

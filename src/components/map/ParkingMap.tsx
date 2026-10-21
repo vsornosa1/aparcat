@@ -83,7 +83,8 @@ const INTERACTIVE_LAYERS = [
   'cameras-icon',
   'reports-circle',
   'segments-line',
-  'ora-lines',
+  'ora-fill',
+  'ora-outline',
 ];
 
 interface ParkingMapProps {
@@ -147,13 +148,23 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
         map.addSource('selected', { type: 'geojson', data: emptyCollection() });
 
         map.addLayer({
-          id: 'ora-lines',
+          id: 'ora-fill',
+          type: 'fill',
+          source: 'ora',
+          paint: {
+            'fill-color': ORA_COLOR,
+            'fill-opacity': 0.35,
+          },
+        });
+
+        map.addLayer({
+          id: 'ora-outline',
           type: 'line',
           source: 'ora',
           paint: {
             'line-color': ORA_COLOR,
-            'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2, 16, 4],
-            'line-opacity': 0.9,
+            'line-width': 1.5,
+            'line-opacity': 0.85,
           },
         });
 
@@ -303,11 +314,27 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
           );
         });
 
-        map.on('click', 'ora-lines', (event: MapLayerMouseEvent) => {
+        const handleOraClick = (event: MapLayerMouseEvent) => {
           const feature = event.features?.[0];
           if (!feature) return;
+
+          const priority = map.queryRenderedFeatures(event.point, {
+            layers: [
+              'facilities-circle',
+              'facilities-icon',
+              'cameras-circle',
+              'cameras-icon',
+              'reports-circle',
+              'segments-line',
+            ],
+          });
+          if (priority.length > 0) return;
+
           showPopup(event, oraPopup(feature.properties as unknown as MapOraProperties));
-        });
+        };
+
+        map.on('click', 'ora-fill', handleOraClick);
+        map.on('click', 'ora-outline', handleOraClick);
 
         map.on('click', (event: MapMouseEvent) => {
           const hits = map.queryRenderedFeatures(event.point, { layers: INTERACTIVE_LAYERS });
@@ -370,7 +397,8 @@ export function ParkingMap({ data, ora, origin, selected, layers, onOrigin }: Pa
     if (!map) return;
 
     setLayerVisibility(map, 'segments-line', layers.streets);
-    setLayerVisibility(map, 'ora-lines', layers.ora);
+    setLayerVisibility(map, 'ora-fill', layers.ora);
+    setLayerVisibility(map, 'ora-outline', layers.ora);
     setLayerVisibility(map, 'facilities-circle', layers.garages);
     setLayerVisibility(map, 'facilities-icon', layers.garages);
     setLayerVisibility(map, 'reports-circle', layers.reports);
@@ -563,28 +591,48 @@ function oraPopup(properties: MapOraProperties): HTMLElement {
   const root = document.createElement('div');
   root.className = 'space-y-1 text-sm';
 
+  const color = properties.color ?? '';
   const title = document.createElement('strong');
-  title.textContent = properties.color ? `Zona ${properties.color.toLowerCase()}` : 'Zona ORA';
+  title.textContent = ORA_ZONE_LABELS[color] ?? 'Zona de aparcamiento';
 
   const type = document.createElement('p');
   type.className = 'text-xs text-zinc-500';
-  type.textContent = 'Aparcamiento regulado (ORA)';
+  type.textContent = ORA_ZONE_TYPES[color] ?? 'Marcas de aparcamiento en calle';
 
   const detail = document.createElement('p');
   detail.className = 'text-xs text-zinc-500';
-  detail.textContent =
-    ORA_DESCRIPTIONS[properties.color ?? ''] ?? 'El Ayuntamiento no publica aforo por tramo.';
+  detail.textContent = ORA_ZONE_DESCRIPTIONS[color] ?? 'Consulta la señalización de la calle.';
 
-  root.append(title, type, detail);
+  const note = document.createElement('p');
+  note.className = 'text-xs text-zinc-500';
+  note.textContent = 'Solo esta zona; otras marcas de la calle pueden tener otra tarifa.';
+
+  root.append(title, type, detail, note);
   return root;
 }
 
-const ORA_DESCRIPTIONS: Record<string, string> = {
-  Azul: 'Rotación: pago y límite de tiempo.',
-  Naranja: 'Mixta: residentes y visitantes.',
-  Verde: 'Exclusiva para residentes.',
-  Blanco: 'Libre y gratuita.',
-  Amarillo: 'Restringida: carga y descarga, bus o movilidad reducida.',
+const ORA_ZONE_LABELS: Record<string, string> = {
+  Azul: 'Zona azul',
+  Naranja: 'Zona naranja',
+  Verde: 'Zona verde',
+  Blanco: 'Zona blanca',
+  Amarillo: 'Zona amarilla',
+};
+
+const ORA_ZONE_TYPES: Record<string, string> = {
+  Azul: 'Aparcamiento regulado (ORA)',
+  Naranja: 'Aparcamiento regulado (ORA)',
+  Verde: 'Aparcamiento regulado (ORA)',
+  Blanco: 'Estacionamiento libre · sin tarifa ORA',
+  Amarillo: 'Zona restringida',
+};
+
+const ORA_ZONE_DESCRIPTIONS: Record<string, string> = {
+  Azul: 'Pago con límite de tiempo.',
+  Naranja: 'Preferente para residentes; los visitantes pueden pagar.',
+  Verde: 'Exclusiva para residentes con distintivo.',
+  Blanco: 'Plazas gratuitas y sin restricción. No es una zona de pago.',
+  Amarillo: 'Carga y descarga, bus o movilidad reducida.',
 };
 
 function mapsLink(location: Coordinates): HTMLAnchorElement {

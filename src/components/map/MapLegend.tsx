@@ -9,10 +9,10 @@ const COLORS = [
 ];
 
 const ORA_COLORS = [
-  { color: 'bg-blue-600', label: 'Azul · rotación' },
+  { color: 'bg-blue-600', label: 'Azul · pago' },
   { color: 'bg-orange-500', label: 'Naranja · mixta' },
   { color: 'bg-emerald-600', label: 'Verde · residentes' },
-  { color: 'bg-zinc-300', label: 'Blanco · libre' },
+  { color: 'bg-zinc-300', label: 'Blanco · gratis' },
   { color: 'bg-yellow-400', label: 'Amarillo · restringido' },
 ];
 
@@ -43,7 +43,7 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
 
         {layers.ora && (
           <div className="mt-1">
-            <p className="text-zinc-600">Zonas ORA</p>
+            <p className="text-zinc-600">Aparcamiento en calle</p>
             <ul className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
               {ORA_COLORS.map((item) => (
                 <li key={item.label} className="flex items-center gap-1.5 text-zinc-600">
@@ -94,8 +94,9 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
           Garajes: plazas libres · Calles: probabilidad prevista
         </p>
         <p className="text-[10px] leading-snug text-zinc-500">
-          ORA: color de zona (sin aforo) · no reserva
+          Pintura ORA: el color indica la tarifa · una calle puede tener varias
         </p>
+        <p className="text-[10px] leading-snug text-zinc-500">Sin aforo por calle · no reserva</p>
         <p className="text-[10px] leading-snug text-zinc-500">
           Mapa: MapTiler · Datos: Ajuntament de València (CC BY 4.0)
         </p>

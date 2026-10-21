@@ -1,4 +1,4 @@
-import type { FeatureCollection, LineString, Point } from 'geojson';
+import type { FeatureCollection, LineString, Point, Polygon } from 'geojson';
 import { z } from 'zod';
 import type { Confidence, Freshness } from '@/domain/types';
 import type { Attribution } from './attribution';
@@ -170,4 +170,4 @@ export interface MapOraProperties {
   color: string | null;
 }
 
-export type OraFeatureCollection = FeatureCollection<LineString, MapOraProperties>;
+export type OraFeatureCollection = FeatureCollection<Polygon, MapOraProperties>;
