@@ -20,6 +20,8 @@ export default defineConfig({
     url: `http://localhost:${port}`,
     reuseExistingServer: false,
     timeout: 180_000,
+    // Key falsa: las llamadas a MapTiler están simuladas, y así el test no depende de .env.local.
+    env: { NEXT_PUBLIC_MAPTILER_KEY: 'e2e-test-key' },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });

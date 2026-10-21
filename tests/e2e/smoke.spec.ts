@@ -121,7 +121,17 @@ async function mockApis(page: Page): Promise<void> {
       },
     }),
   );
-  await page.route('https://api.maptiler.com/maps/**', (route) => route.abort());
+  await page.route('https://api.maptiler.com/maps/**', (route) =>
+    route.fulfill({
+      json: {
+        version: 8,
+        sources: {},
+        layers: [
+          { id: 'background', type: 'background', paint: { 'background-color': '#eef2f5' } },
+        ],
+      },
+    }),
+  );
   await page.route('https://api.maptiler.com/tiles/**', (route) => route.abort());
   await page.route('**/api/reports', (route) =>
     route.fulfill({ status: 201, json: CREATED_REPORT }),
@@ -200,4 +210,27 @@ test('envía un reporte anónimo y muestra confirmación', async ({ page }) => {
   await expect(page.getByText('Hueco reportado. Gracias por avisar.')).toBeVisible();
   expect(payload.kind).toBe('spot_free');
   expect(payload.latitude).toBeCloseTo(39.4705, 2);
+});
+
+test('si el estilo de MapTiler falla, el mapa sigue con las capas de datos', async ({ page }) => {
+  await page.route('https://api.maptiler.com/maps/**', (route) =>
+    route.fulfill({ status: 403, json: { message: 'Invalid key or origin' } }),
+  );
+  await page.goto('/');
+
+  await expect(
+    page.getByRole('status').filter({ hasText: 'No se pudo cargar el mapa base' }),
+  ).toBeVisible();
+
+  // El mapa sigue vivo: tocar un punto elige el origen y trae recomendaciones.
+  await page
+    .getByRole('application', { name: 'Mapa de aparcamiento' })
+    .click({ position: { x: 300, y: 300 } });
+  await expect(page.getByRole('heading', { name: 'Garaje de prueba' })).toBeVisible();
+});
+
+test('con el mapa base disponible no aparece el aviso de fallo', async ({ page }) => {
+  await choosePlace(page);
+
+  await expect(page.getByText('No se pudo cargar el mapa base')).toHaveCount(0);
 });

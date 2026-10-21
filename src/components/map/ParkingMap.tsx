@@ -25,7 +25,12 @@ import type {
 } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
 import { FEW_SPACES, formatFreeSpaces, formatPlaceName, PLENTY_OF_SPACES } from '@/lib/format';
-import { getMapStyle } from '@/lib/map-style';
+import {
+  getMapStyle,
+  getNeutralStyle,
+  hasBasemap,
+  shouldFallBackToNeutralStyle,
+} from '@/lib/map-style';
 import { mapsUrl } from '@/lib/maps';
 import type { MapLayerVisibility } from './layers';
 
@@ -102,6 +107,8 @@ interface ParkingMapProps {
   layers: MapLayerVisibility;
   onOrigin: (origin: Coordinates) => void;
   onFacilityClick: (facilityId: string) => void;
+  /** El estilo de MapTiler no cargó y el mapa pasó al fondo neutro. */
+  onBasemapError: () => void;
 }
 
 export function ParkingMap({
@@ -113,12 +120,14 @@ export function ParkingMap({
   layers,
   onOrigin,
   onFacilityClick,
+  onBasemapError,
 }: ParkingMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const popupRef = useRef<Popup | null>(null);
   const onOriginRef = useRef(onOrigin);
   const onFacilityClickRef = useRef(onFacilityClick);
+  const onBasemapErrorRef = useRef(onBasemapError);
   const originRef = useRef(origin);
   const selectedRef = useRef(selected);
   const [ready, setReady] = useState(false);
@@ -126,9 +135,10 @@ export function ParkingMap({
   useEffect(() => {
     onOriginRef.current = onOrigin;
     onFacilityClickRef.current = onFacilityClick;
+    onBasemapErrorRef.current = onBasemapError;
     originRef.current = origin;
     selectedRef.current = selected;
-  }, [onOrigin, onFacilityClick, origin, selected]);
+  }, [onOrigin, onFacilityClick, onBasemapError, origin, selected]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -376,8 +386,27 @@ export function ParkingMap({
         setReady(true);
       };
 
-      map.on('style.load', addLayers);
+      let styleLoaded = false;
+      let usedFallback = false;
+
+      map.on('style.load', () => {
+        styleLoaded = true;
+        addLayers();
+      });
       map.on('load', addLayers);
+
+      // Si MapTiler rechaza el estilo (403 por dominio o key, red caída) el mapa se
+      // quedaría vacío y sin capas de datos: se sustituye por un fondo neutro.
+      map.on('error', () => {
+        if (
+          !shouldFallBackToNeutralStyle({ basemapRequested: hasBasemap, styleLoaded, usedFallback })
+        ) {
+          return;
+        }
+        usedFallback = true;
+        onBasemapErrorRef.current();
+        map.setStyle(getNeutralStyle());
+      });
     };
 
     // Retrasar la creación evita el doble montaje de StrictMode y que el primer

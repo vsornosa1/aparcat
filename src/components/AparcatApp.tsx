@@ -38,6 +38,7 @@ export function AparcatApp() {
   const [focusRequest, setFocusRequest] = useState(0);
   const [report, setReport] = useState<ReportFeedback | null>(null);
   const [isReporting, setIsReporting] = useState(false);
+  const [basemapFailed, setBasemapFailed] = useState(false);
   const [layers, setLayers] = useState<MapLayerVisibility>(DEFAULT_LAYERS);
   const requestId = useRef(0);
   const oraRequested = useRef(false);
@@ -132,6 +133,8 @@ export function AparcatApp() {
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
   }, []);
 
+  const handleBasemapError = useCallback(() => setBasemapFailed(true), []);
+
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
     setFocusRequest((current) => current + 1);
@@ -195,6 +198,7 @@ export function AparcatApp() {
           layers={layers}
           onOrigin={handleOrigin}
           onFacilityClick={handleFacilityClick}
+          onBasemapError={handleBasemapError}
         />
 
         <div
@@ -211,6 +215,15 @@ export function AparcatApp() {
               Añade <code className="font-mono">NEXT_PUBLIC_MAPTILER_KEY</code> al{' '}
               <code className="font-mono">.env.local</code> para ver el mapa base. Las capas de
               datos siguen funcionando.
+            </p>
+          )}
+          {hasBasemap && basemapFailed && (
+            <p
+              role="status"
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-800 shadow-sm"
+            >
+              No se pudo cargar el mapa base. Las capas de datos siguen funcionando sobre un fondo
+              neutro.
             </p>
           )}
         </div>
