@@ -16,7 +16,7 @@ export default function PrivacidadPage() {
 
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Privacidad</h1>
-        <p className="text-xs text-zinc-500">Última actualización: 20 de octubre de 2026.</p>
+        <p className="text-xs text-zinc-500">Última actualización: 21 de octubre de 2026.</p>
       </header>
 
       <section className="space-y-2">
@@ -47,6 +47,17 @@ export default function PrivacidadPage() {
         <p>
           La dirección IP se usa de forma transitoria para limitar la frecuencia de envío y no se
           almacena.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-base font-semibold text-zinc-900">Analítica</h2>
+        <p>
+          Usamos Vercel Web Analytics para saber cuántas visitas recibe Aparcat y qué páginas se
+          consultan. No usa cookies ni identifica a las personas: Vercel cuenta cada visita con un
+          hash de la petición, descarta esa sesión a las 24 horas y solo conserva estadísticas
+          agregadas como la página, el referente, el país, el idioma, el dispositivo y el navegador.
+          No se usa para publicidad ni se vende a terceros.
         </p>
       </section>
 

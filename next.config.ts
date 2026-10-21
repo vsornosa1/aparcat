@@ -1,5 +1,10 @@
 import type { NextConfig } from 'next';
 
+// En Vercel, el script de analítica y su intake son del mismo origen. En
+// desarrollo `@vercel/analytics` carga script.debug.js desde va.vercel-scripts.com.
+const analyticsScriptSrc =
+  process.env.NODE_ENV === 'production' ? '' : ' https://va.vercel-scripts.com';
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
@@ -24,7 +29,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'" + analyticsScriptSrc,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://api.maptiler.com https://*.maptiler.com",
               "connect-src 'self' https://api.maptiler.com https://*.maptiler.com",

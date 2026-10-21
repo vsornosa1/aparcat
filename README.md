@@ -26,7 +26,7 @@ Los endpoints, campos, licencias y limitaciones están verificados en [docs/rese
 
 ## Stack
 
-Next.js 16 · TypeScript estricto · Tailwind CSS · PostgreSQL + PostGIS · Drizzle ORM · Vitest.
+Next.js 16 · TypeScript estricto · Tailwind CSS · PostgreSQL + PostGIS · Drizzle ORM · Vitest · Vercel Web Analytics.
 
 ## Puesta en marcha
 
@@ -50,7 +50,7 @@ Abre <http://localhost:3000>. Sin key de MapTiler en `.env.local`, el mapa usa e
 | `npm run lint`             | ESLint                                                                           |
 | `npm run typecheck`        | TypeScript sin emitir                                                            |
 | `npm test`                 | Pruebas unitarias                                                                |
-| `npm run test:integration` | Pruebas contra PostgreSQL (requiere PostgreSQL con PostGIS y migraciones)                        |
+| `npm run test:integration` | Pruebas contra PostgreSQL (requiere PostgreSQL con PostGIS y migraciones)        |
 | `npm run test:coverage`    | Cobertura con umbrales                                                           |
 | `npm run test:e2e`         | Playwright con APIs simuladas                                                    |
 | `npm run db:migrate`       | Aplica las migraciones pendientes                                                |
@@ -96,6 +96,10 @@ En la configuración de la key:
 La búsqueda usa MapTiler Geocoding limitado al área de Valencia. Si no hay key, el mapa muestra un fondo neutro con las capas de datos y la búsqueda cae al endpoint local de calles.
 
 En Vercel, define `NEXT_PUBLIC_MAPTILER_KEY` en las variables de entorno del proyecto: se compila en el bundle durante el build.
+
+## Analítica
+
+La app incluye Vercel Web Analytics (`@vercel/analytics` con `<Analytics />` en el layout raíz). No usa cookies ni identificadores personales y no envía datos en desarrollo. Para activarla, abre **Analytics** en el proyecto de Vercel, pulsa **Enable** y vuelve a desplegar. El script y el intake son del mismo origen; la CSP solo permite `va.vercel-scripts.com` en desarrollo para el script de depuración. Detalle en [docs/deploy.md](docs/deploy.md).
 
 ## Estructura
 

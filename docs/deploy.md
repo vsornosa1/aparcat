@@ -241,13 +241,28 @@ Qué debe pasar:
 - La home carga el mapa, las capas y la geolocalización sin errores de CSP en la consola.
 - En Vercel, **Logs** no muestra errores de conexión a la base.
 
-## 8. Dominio propio
+## 8. Vercel Web Analytics
+
+La app ya incluye `@vercel/analytics` (`<Analytics />` en `src/app/layout.tsx`). No requiere variables de entorno ni cambios de build.
+
+1. En Vercel, abre el proyecto y ve a **Analytics** en la barra lateral.
+2. Pulsa **Enable**. Al desplegar, Vercel añade las rutas `/_vercel/insights/*` y `/<ruta-única>/*` al proyecto.
+3. Vuelve a desplegar para que el script quede disponible.
+
+Notas:
+
+- Las visitas solo se registran en despliegues de Vercel; en desarrollo el paquete no envía datos.
+- El script y el intake son del mismo origen, así que la CSP de `next.config.ts` no necesita dominios externos en producción. En desarrollo se permite `https://va.vercel-scripts.com` para cargar `script.debug.js`.
+- Si usas un proxy inverso delante de Vercel, debe reenviar `/_vercel/insights/*` y `/<ruta-única>/*`.
+- No usa cookies ni identificadores personales; el detalle está en la página de privacidad. Si cambias el modo de analítica, actualiza también esa página.
+
+## 9. Dominio propio
 
 1. En Vercel: **Settings → Domains → Add**, y configura el DNS que indique Vercel.
 2. Añade el dominio a **Allowed HTTP Origins** en MapTiler.
 3. Si cambias `NEXT_PUBLIC_*`, vuelve a desplegar; el dominio por sí solo no requiere rebuild.
 
-## 9. Operación
+## 10. Operación
 
 - **Salud:** `GET /api/health` (estado de la base y última ingesta por fuente).
 - **Logs:** Vercel para la web, Railway o GitHub Actions para la ingesta. Pino emite JSON.
@@ -261,7 +276,7 @@ Qué debe pasar:
 - **Rollback de la web:** Vercel → **Deployments** → **Promote to Production** sobre un despliegue anterior. Las migraciones son aditivas, así que volver atrás no rompe el esquema.
 - **Rollback de datos:** restaura `backup.sql` solo si una migración destructiva lo exige (hoy no hay ninguna).
 
-## 10. Problemas comunes
+## 11. Problemas comunes
 
 | Síntoma | Causa probable | Solución |
 | --- | --- | --- |
@@ -273,8 +288,9 @@ Qué debe pasar:
 | `too many connections` | Se usa la cadena directa en la web | Usa la cadena **pooled** en `DATABASE_URL` de Vercel. |
 | El build falla en `postinstall` | No se copió el worker de MapLibre | Ejecuta `npm ci` en local y revisa `scripts/copy-maplibre-worker.mjs`. |
 | Las previews no cargan teselas | Dominio de preview no autorizado en MapTiler | Añade el dominio o usa la key sin restricción temporal. |
+| Analytics sin datos | No está activada en el panel o falta redesplegar | Activa **Analytics** en el proyecto de Vercel y vuelve a desplegar. |
 
-## 11. Checklist de lanzamiento
+## 12. Checklist de lanzamiento
 
 - [ ] Cambios commiteados y push a `main`; CI en verde.
 - [ ] Neon creado y PostGIS activo.
@@ -282,6 +298,7 @@ Qué debe pasar:
 - [ ] Variables de entorno definidas en Vercel.
 - [ ] `REPORT_SALT` aleatoria y distinta de la de desarrollo.
 - [ ] Key de MapTiler restringida al dominio.
+- [ ] Analytics activada en Vercel y redesplegada.
 - [ ] Web desplegada y `/api/health` en `ok`.
 - [ ] `npm run probe:sources` sin errores.
 - [ ] Primera ingesta completada y worker programado.
