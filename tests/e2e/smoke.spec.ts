@@ -132,6 +132,46 @@ test('en móvil la leyenda no tapa el mapa hasta abrirla', async ({ page }) => {
   await expect(legendButton).toHaveAttribute('aria-expanded', 'true');
 });
 
+test('en móvil el panel se baja para dejar el mapa libre y vuelve con resultados', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await choosePlace(page);
+
+  const sheet = page.getByRole('complementary', { name: 'Resultados' });
+  await page.getByRole('button', { name: 'Ocultar resultados' }).click();
+
+  await expect(page.getByRole('button', { name: 'Mostrar resultados' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await expect.poll(async () => (await sheet.boundingBox())?.height ?? 0).toBeLessThan(100);
+
+  // Elegir otro punto en el mapa trae resultados nuevos: el panel vuelve a subir.
+  await page
+    .getByRole('application', { name: 'Mapa de aparcamiento' })
+    .click({ position: { x: 200, y: 300 } });
+  await expect.poll(async () => (await sheet.boundingBox())?.height ?? 0).toBeGreaterThan(300);
+  await expect(page.getByRole('heading', { name: 'Garaje de prueba' })).toBeInViewport();
+});
+
+test('en móvil el panel se sube y se baja con el teclado', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await choosePlace(page);
+
+  const sheet = page.getByRole('complementary', { name: 'Resultados' });
+  const handle = page.getByRole('button', { name: /resultados$/ });
+
+  await handle.focus();
+  await page.keyboard.press('ArrowUp');
+  await expect.poll(async () => (await sheet.boundingBox())?.height ?? 0).toBeGreaterThan(700);
+
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await expect.poll(async () => (await sheet.boundingBox())?.height ?? 0).toBeLessThan(100);
+  await expect(handle).toHaveAttribute('aria-expanded', 'false');
+});
+
 test('en móvil la capa ORA se puede activar y desactivar', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await choosePlace(page);

@@ -17,3 +17,43 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+/*
+ * En móvil el panel de resultados es una hoja sobre el mapa. La leyenda y los
+ * controles del mapa suben y bajan con ella (--sheet-cover lo fija BottomSheet).
+ */
+@media (max-width: 1023.98px) {
+  /* Nunca por encima del buscador y las capas. */
+  .map-above-sheet {
+    bottom: min(calc(var(--sheet-cover, 45dvh) + 0.5rem), calc(100% - 9rem));
+  }
+
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    bottom: min(calc(var(--sheet-cover, 45dvh) + 0.5rem), calc(100% - 14rem));
+  }
+
+  main:not([data-sheet-dragging]) .map-above-sheet,
+  main:not([data-sheet-dragging]) .maplibregl-ctrl-bottom-left,
+  main:not([data-sheet-dragging]) .maplibregl-ctrl-bottom-right {
+    transition:
+      bottom 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 200ms;
+  }
+
+  /* Con el panel casi a pantalla completa apenas queda mapa: fuera leyenda y zoom. */
+  main[data-sheet='full'] .map-above-sheet,
+  main[data-sheet='full'] .maplibregl-ctrl-bottom-left,
+  main[data-sheet='full'] .maplibregl-ctrl-bottom-right {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 1023.98px) and (prefers-reduced-motion: reduce) {
+  .map-above-sheet,
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    transition: none !important;
+  }
+}

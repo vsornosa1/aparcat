@@ -11,6 +11,7 @@ import { useLocate } from '@/lib/use-locate';
 import { LayerControls } from './map/LayerControls';
 import { MapLegend } from './map/MapLegend';
 import { DEFAULT_LAYERS, type MapLayerVisibility } from './map/layers';
+import { BottomSheet } from './parking/BottomSheet';
 import { SearchBar } from './parking/SearchBar';
 import { RecommendationSheet } from './parking/RecommendationSheet';
 import type { ReportFeedback } from './reports/ReportButtons';
@@ -184,9 +185,9 @@ export function AparcatApp() {
   );
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden lg:flex-row">
+    <main className="relative h-dvh overflow-hidden lg:flex lg:flex-row">
       <section
-        className="relative h-[46dvh] min-h-[260px] shrink-0 lg:h-auto lg:min-h-0 lg:flex-1"
+        className="absolute inset-0 lg:relative lg:inset-auto lg:flex-1"
         aria-label="Mapa y búsqueda de aparcamiento"
       >
         <ParkingMap
@@ -231,7 +232,7 @@ export function AparcatApp() {
         <MapLegend layers={layers} />
       </section>
 
-      <aside className="flex min-h-0 flex-1 flex-col border-t border-zinc-200 bg-white lg:h-full lg:w-[420px] lg:flex-none lg:border-l lg:border-t-0">
+      <BottomSheet revealKey={origin ? `${origin.latitude},${origin.longitude}` : null}>
         <RecommendationSheet
           origin={origin}
           nearby={nearby}
@@ -248,7 +249,7 @@ export function AparcatApp() {
           isReporting={isReporting}
           report={report}
         />
-      </aside>
+      </BottomSheet>
     </main>
   );
 }

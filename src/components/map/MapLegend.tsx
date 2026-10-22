@@ -24,10 +24,10 @@ export function MapLegend({ layers }: { layers: MapLayerVisibility }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="pointer-events-none absolute bottom-9 left-3 z-10 flex flex-col items-start gap-1.5">
+    <div className="map-above-sheet pointer-events-none absolute bottom-9 left-3 z-10 flex flex-col items-start gap-1.5">
       <div
         id="map-legend"
-        className={`${open ? 'block' : 'hidden'} pointer-events-auto max-h-[calc(46dvh-9rem)] w-64 lg:max-h-[50dvh] max-w-[calc(100vw-5rem)] space-y-1.5 overflow-y-auto rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-[11px] shadow-sm backdrop-blur lg:block`}
+        className={`${open ? 'block' : 'hidden'} pointer-events-auto max-h-[calc(100dvh-var(--sheet-cover,45dvh)-12rem)] w-64 lg:max-h-[50dvh] max-w-[calc(100vw-5rem)] space-y-1.5 overflow-y-auto rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-[11px] shadow-sm backdrop-blur lg:block`}
       >
         <p className="flex items-center gap-1.5 font-medium text-zinc-800">
           <span

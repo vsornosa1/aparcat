@@ -23,6 +23,7 @@ import type {
   OraFeatureCollection,
 } from '@/api/contracts';
 import type { Coordinates } from '@/domain/types';
+import { coveredBottom } from '@/lib/bottom-sheet';
 import { FEW_SPACES, formatFreeSpaces, formatPlaceName, PLENTY_OF_SPACES } from '@/lib/format';
 import {
   getMapStyle,
@@ -431,7 +432,14 @@ export function ParkingMap({
 
     const distance = map.getCenter().distanceTo(new LngLat(origin.longitude, origin.latitude));
     if (distance > 500) {
-      map.flyTo({ center: [origin.longitude, origin.latitude], zoom: 14.5, duration: 600 });
+      // En móvil el panel tapa la parte de abajo: el origen se centra en lo que queda a la vista.
+      const covered = sheetCover(map.getContainer());
+      map.flyTo({
+        center: [origin.longitude, origin.latitude],
+        zoom: 14.5,
+        duration: 600,
+        offset: [0, -covered / 2],
+      });
     }
   }, [ready, origin]);
 
@@ -478,7 +486,13 @@ export function ParkingMap({
   );
 }
 
-/** Márgenes para encuadrar sin que el buscador ni la leyenda tapen los puntos. */
+/** Lo que el panel de resultados tapa del mapa (la hoja inferior en móvil). */
+function sheetCover(container: HTMLElement): number {
+  const sheet = document.querySelector('[data-bottom-sheet]')?.getBoundingClientRect();
+  return coveredBottom(container.getBoundingClientRect(), sheet);
+}
+
+/** Márgenes para encuadrar sin que el buscador, la leyenda ni el panel tapen los puntos. */
 function overlayPadding(container: HTMLElement) {
   const box = container.getBoundingClientRect();
   const section = container.closest('section');
@@ -488,7 +502,10 @@ function overlayPadding(container: HTMLElement) {
 
   const padding = {
     top: top ? Math.max(margin, top.bottom - box.top + margin) : margin,
-    bottom: legend && legend.height > 0 ? box.bottom - legend.top + margin : margin + 24,
+    bottom: Math.max(
+      legend && legend.height > 0 ? box.bottom - legend.top + margin : margin + 24,
+      sheetCover(container) + margin,
+    ),
     left: margin,
     right: margin + 24,
   };

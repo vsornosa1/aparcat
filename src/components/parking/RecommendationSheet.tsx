@@ -44,7 +44,10 @@ export function RecommendationSheet({
 }: RecommendationSheetProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="border-b border-zinc-200 px-3 py-2 sm:px-4 sm:py-2.5">
+      <header
+        data-sheet-drag
+        className="border-b border-zinc-200 px-3 py-2 max-lg:cursor-grab max-lg:touch-none max-lg:select-none max-lg:pt-0 sm:px-4 sm:py-2.5"
+      >
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-semibold tracking-tight text-zinc-900">Aparcat</h1>
           <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
