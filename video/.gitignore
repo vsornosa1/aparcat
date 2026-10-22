@@ -1,0 +1,7 @@
+node_modules
+checks
+data/raw
+music/raw.wav
+music/measure.txt
+out/*
+!out/aparcat-linkedin.mp4

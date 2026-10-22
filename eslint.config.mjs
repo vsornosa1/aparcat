@@ -36,6 +36,8 @@ const eslintConfig = defineConfig([
     // Local tooling and generated assets are not linted.
     '.agents/**',
     'public/maplibre-gl-worker.mjs',
+    // The LinkedIn video is a separate Remotion project.
+    'video/**',
   ]),
 ]);
 
