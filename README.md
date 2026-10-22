@@ -2,6 +2,8 @@
 
 Webapp para encontrar aparcamiento libre cerca de ti en Valencia sin dar vueltas.
 
+Es gratis: sin cuentas, sin anuncios y sin nada que comprar. Si te resulta útil, puedes [invitarme a un café](https://ko-fi.com/sornosa).
+
 > **Estado:** MVP completo. El mapa, las recomendaciones, las cámaras (solo ubicación) y los reportes funcionan con datos reales. La CI está configurada y pendiente de ejecutarse en GitHub.
 
 ## Cómo funciona
